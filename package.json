@@ -4,6 +4,7 @@
   "description": "Self-contained dynamic video generator using Remotion",
   "main": "scripts/render.mjs",
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "setup": "node scripts/setup-agent.mjs",
     "scan": "node scripts/scan-assets.mjs",
