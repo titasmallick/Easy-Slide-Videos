@@ -17,7 +17,7 @@
   },
   "audio": {
     "musicPath": "assets/pog/School Anthem_01.wav",
-    "volume": 1,
+    "volume": 1.0,
     "loop": true,
     "fadeInInSeconds": 2,
     "fadeOutInSeconds": 2
@@ -40,8 +40,8 @@
     "subtitle": "Workshop on ~~Economics~~",
     "durationInSeconds": 6,
     "theme": {
-      "background": "linear-gradient(135deg, #0e1b2d 0%, #050a11 100%)",
-      "textColor": "#eff6ff",
+      "background": "linear-gradient(135deg, #0e1b2d 0%, #060b13 100%)",
+      "textColor": "#f8fafc",
       "subtitleColor": "#93c5fd"
     }
   },
@@ -170,9 +170,9 @@
     "website": "pearlsofgod.in",
     "durationInSeconds": 6,
     "theme": {
-      "background": "linear-gradient(135deg, #0e1b2d 0%, #050a11 100%)",
-      "textColor": "#eff6ff",
-      "subtitleColor": "#93c5fd"
+      "background": "linear-gradient(135deg, #060b13 0%, #0e1b2d 100%)",
+      "textColor": "#f8fafc",
+      "subtitleColor": "#fb923c"
     }
   }
 }
