@@ -3,7 +3,7 @@
     "width": 1920,
     "height": 1080,
     "fps": 30,
-    "maxCharactersPerSlide": 450,
+    "maxCharactersPerSlide": 750,
     "themeName": "arctic-blue",
     "theme": {},
     "fontFamily": "outfit",
@@ -37,7 +37,7 @@
     "show": true,
     "style": "glassmorphic",
     "title": "Pearls Of God School",
-    "subtitle": "Workshop on Economics",
+    "subtitle": "Workshop on ~~Economics~~",
     "durationInSeconds": 6,
     "theme": {
       "background": "linear-gradient(135deg, #0e1b2d 0%, #060b13 100%)",
@@ -59,6 +59,30 @@
       "transition": "fade"
     },
     {
+      "id": "program_intro",
+      "folder": "program_intro",
+      "media": null,
+      "mediaType": null,
+      "heading": "Beyond the Textbooks",
+      "content": "The world is moving towards a **new economic regime**. We should not remain confound in the boundaries of the text books. We should ~~go beyond them~~ also so that we may realise the importance of the economy and may connect to the real life implementation of what we study.",
+      "durationInSeconds": 10,
+      "mediaStartFromInSeconds": 0,
+      "layout": "text-only",
+      "transition": "fade"
+    },
+    {
+      "id": "economics_department",
+      "folder": "economics_department",
+      "media": null,
+      "mediaType": null,
+      "heading": "A Workshop on Economics",
+      "content": "This workshop is an attempt to excellence by our esteemed institution under the efficient guidance of the management and is organised by **Mrs Gopa Mukherjee**, **Mrs Ananya Sarkar** and **Mrs Payal Bhattacharya Pati**, the teachers of the ~~Economics department~~ of our School for the holistic development of the students by introducing them and to enable them to think logically about the subject and its importance.",
+      "durationInSeconds": 10,
+      "mediaStartFromInSeconds": 0,
+      "layout": "text-only",
+      "transition": "fade"
+    },
+    {
       "id": "slide_1",
       "folder": "school_picture",
       "media": "assets/pog/school picture.jpeg",
@@ -69,19 +93,6 @@
       "durationInSeconds": 9,
       "mediaStartFromInSeconds": 0,
       "layout": "split-media-right",
-      "transition": "fade"
-    },
-    {
-      "id": "slide_2",
-      "folder": "secretary",
-      "media": "assets/pog/secretary.jpeg",
-      "mediaType": "image",
-      "heading": "~~Mrs. Anuradha Chatterjee~~",
-      "subheading": "**Secretary**, Pearls Of God",
-      "content": "Guiding the institution towards new horizons, fostering **academic growth** and community empowerment.",
-      "durationInSeconds": 9,
-      "mediaStartFromInSeconds": 0,
-      "layout": "split-media-left",
       "transition": "fade"
     },
     {
@@ -111,6 +122,19 @@
       "transition": "fade"
     },
     {
+      "id": "slide_2",
+      "folder": "secretary",
+      "media": "assets/pog/secretary.jpeg",
+      "mediaType": "image",
+      "heading": "~~Mrs. Anuradha Chatterjee~~",
+      "subheading": "**Secretary**, Pearls Of God",
+      "content": "Guiding the institution towards new horizons, fostering **academic growth** and community empowerment.",
+      "durationInSeconds": 9,
+      "mediaStartFromInSeconds": 0,
+      "layout": "split-media-left",
+      "transition": "fade"
+    },
+    {
       "id": "slide_5",
       "folder": "administrative_chief",
       "media": "assets/pog/administrative chief.jpeg",
@@ -128,7 +152,7 @@
       "folder": "title_banner",
       "media": "assets/pog/title banner.jpeg",
       "mediaType": "image",
-      "heading": "Workshop on Economics",
+      "heading": "Workshop on ~~Economics~~",
       "subheading": "Building Bricks: The Genesis of a Giant",
       "content": "On the ~~32nd Foundation Year~~ of our school, we look forward to welcoming you to this seminar and interactive workshop.",
       "durationInSeconds": 9,
@@ -140,7 +164,7 @@
   "endPage": {
     "show": true,
     "style": "glassmorphic",
-    "title": "Welcome to the Seminar",
+    "title": "Welcome to the Workshop",
     "subtitle": "Pearls Of God School",
     "contact": "32nd Foundation Year Celebration",
     "website": "pearlsofgod.in",
