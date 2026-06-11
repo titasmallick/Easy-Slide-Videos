@@ -1,0 +1,29 @@
+{
+  "name": "balerkaj-video-maker",
+  "version": "1.0.0",
+  "description": "Self-contained dynamic video generator using Remotion",
+  "main": "scripts/render.mjs",
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup-agent.mjs",
+    "scan": "node scripts/scan-assets.mjs",
+    "render": "node scripts/render.mjs",
+    "studio": "npx.cmd remotion studio",
+    "build": "npx.cmd remotion bundle src/index.ts out/bundle.js"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.456",
+    "@remotion/google-fonts": "^4.0.456",
+    "@remotion/media-utils": "^4.0.456",
+    "lucide-react": "^1.14.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-markdown": "^10.1.0",
+    "remotion": "^4.0.456",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
+  }
+}
