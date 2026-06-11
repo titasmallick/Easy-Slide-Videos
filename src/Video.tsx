@@ -1052,6 +1052,24 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
               strong: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900}} {...props} />,
               em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
               del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
+              a: ({node, href, ...props}) => {
+                if (href === 'highlight') {
+                  return (
+                    <span 
+                      style={{
+                        textDecoration: 'none', 
+                        background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, 
+                        borderBottom: `3px solid ${theme.accent}`, 
+                        padding: '2px 6px', 
+                        borderRadius: '4px', 
+                        fontWeight: 900
+                      }} 
+                      {...props} 
+                    />
+                  );
+                }
+                return <a href={href} style={{ color: theme.primary }} {...props} />;
+              },
               code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
               p: ({node, ...props}) => <p style={{margin: '0 0 16px 0'}} {...props} />,
               ul: ({node, ...props}) => <ul style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'square' }} {...props} />,
@@ -1059,7 +1077,7 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
               li: ({node, ...props}) => <li style={{marginBottom: 10}} {...props} />,
             }}
           >
-            {slide.content}
+            {slide.content.replace(/~~(.*?)~~/g, "[$1](highlight)")}
           </ReactMarkdown>
         </div>
       )}
