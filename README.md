@@ -76,7 +76,15 @@ npm run scan
 - Directories under `assets/` (excluding `music` and `branding`) are sorted and created as slide steps.
 - **Text Mapping**:
   - `nametext.txt` or `heading.txt` (line 1 is the slide heading, line 2+ is content).
+  - `subheading.txt` or `subtitle.txt` (read as slide subheading).
   - `descriptive_text.txt` or `content.txt` (read as slide content body).
+
+### 🖋️ Slide Content Typography Formatting & Highlights
+You can apply premium custom color highlights in your slide body content using standard Markdown syntax wrappers:
+1. **Secondary Color Highlight**: Wrap text in double asterisks: `**text**` (e.g. renders in glowing orange/cyan/magenta depending on the active theme).
+2. **Accent Color Highlight**: Wrap text in single asterisks or underscores: `*text*` or `_text_` (renders in theme's accent color like neon yellow/green).
+3. **Highlighter Pen Background Glow**: Wrap text in double tildes: `~~text~~` (renders text inside a glowing translucent background pill with a thick bottom border).
+4. **Code Badge Glow**: Wrap text in backticks: `` `text` `` (renders text inside a minimal monospace dark badge container).
 ---
 
 ## ⚙️ Configuration Properties (`config.json`)
@@ -232,5 +240,5 @@ To render high-quality still images/covers from specific compositions:
 ---
 
 ## 📄 License
-MIT
+ISC
 

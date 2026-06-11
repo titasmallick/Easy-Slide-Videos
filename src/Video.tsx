@@ -145,6 +145,7 @@ export interface SlideData {
   media: string | null;
   mediaType: 'image' | 'video' | null;
   heading: string;
+  subheading?: string;
   content: string;
   durationInSeconds: number;
   mediaStartFromInSeconds?: number;
@@ -1023,6 +1024,20 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
           {slide.heading}
         </h2>
       )}
+      {slide.subheading && (
+        <h3 style={{
+          fontFamily,
+          fontSize: isPortrait ? 24 : 32,
+          fontWeight: 700,
+          color: theme.secondary,
+          margin: '-12px 0 24px 0',
+          lineHeight: 1.2,
+          letterSpacing: -0.5,
+          opacity: 0.9,
+        }}>
+          {slide.subheading}
+        </h3>
+      )}
       {slide.content && (
         <div style={{
           fontFamily,
@@ -1035,6 +1050,9 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
           <ReactMarkdown
             components={{
               strong: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900}} {...props} />,
+              em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
+              del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
+              code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
               p: ({node, ...props}) => <p style={{margin: '0 0 16px 0'}} {...props} />,
               ul: ({node, ...props}) => <ul style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'square' }} {...props} />,
               ol: ({node, ...props}) => <ol style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'decimal' }} {...props} />,

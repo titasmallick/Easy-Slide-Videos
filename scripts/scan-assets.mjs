@@ -130,6 +130,7 @@ async function scan() {
     let media = null;
     let mediaType = null;
     let heading = '';
+    let subheading = '';
     let content = '';
 
     // Look for media and text files
@@ -156,6 +157,8 @@ async function scan() {
               content = lines.slice(1).join('\n');
             }
           }
+        } else if (lowerFile === 'subheading.txt' || lowerFile === 'subtitle.txt') {
+          subheading = textContent;
         } else if (lowerFile === 'descriptive_text.txt' || lowerFile === 'content.txt') {
           content = textContent;
         } else {
@@ -203,6 +206,7 @@ async function scan() {
         media,
         mediaType,
         heading: slideHeading,
+        subheading,
         content: chunk,
         durationInSeconds,
         mediaStartFromInSeconds: mediaType === 'video' ? accumulatedOffset : 0,
@@ -298,6 +302,7 @@ async function scan() {
     if (existing) {
       return {
         ...scanned,
+        subheading: existing.subheading ?? scanned.subheading,
         durationInSeconds: existing.durationInSeconds ?? scanned.durationInSeconds,
         layout: existing.layout || scanned.layout,
         transition: existing.transition || scanned.transition,

@@ -340,6 +340,7 @@ async function runSetup() {
       while (retrySlide) {
         console.log(`\n${colors.fgCyan}${colors.bright}• Configure Slide ${i} of ${slideCount}:${colors.reset}`);
         const heading = await rl.question(`  Heading [e.g. Topic ${i}]: `) || `Topic ${i}`;
+        const subheading = await rl.question(`  Subheading (optional, press Enter to skip): `) || "";
         const content = await rl.question(`  Text content body: `);
         
         let mediaPath = '';
@@ -371,6 +372,7 @@ async function runSetup() {
 
         console.log(`\n${colors.bright}Slide Summary Preview:${colors.reset}`);
         console.log(` 👉 Title: ${heading}`);
+        if (subheading) console.log(` 👉 Subheading: ${subheading}`);
         console.log(` 👉 Content: ${content}`);
         console.log(` 👉 Media: ${mediaPath || 'None'}`);
         console.log(` 👉 Layout: ${layout}`);
@@ -383,6 +385,7 @@ async function runSetup() {
             id: `slide_${i}`,
             folder: `slide ${i}`,
             heading,
+            subheading,
             content,
             mediaSourcePath: mediaPath,
             mediaStartFromInSeconds,
@@ -445,6 +448,14 @@ async function runSetup() {
     // Write nametext.txt
     const textData = `${slide.heading || ''}\n${slide.content || ''}`;
     fs.writeFileSync(path.join(slideDir, 'nametext.txt'), textData.trim(), 'utf-8');
+
+    // Write subheading.txt if exists
+    if (slide.subheading) {
+      fs.writeFileSync(path.join(slideDir, 'subheading.txt'), slide.subheading.trim(), 'utf-8');
+    } else {
+      const subFilePath = path.join(slideDir, 'subheading.txt');
+      if (fs.existsSync(subFilePath)) fs.rmSync(subFilePath, { force: true });
+    }
 
     // Copy slide media if it is a local path
     if (slide.mediaSourcePath && !slide.mediaSourcePath.startsWith('assets/') && fs.existsSync(slide.mediaSourcePath)) {
@@ -645,6 +656,7 @@ async function runSetup() {
           const targetSlide = uniqueSlides[slideNum - 1];
           console.log(`\nEditing Slide ${slideNum}:`);
           const newHeading = await rl.question(`  Heading [Current: "${targetSlide.heading}"]: `) || targetSlide.heading;
+          const newSubheading = await rl.question(`  Subheading [Current: "${targetSlide.subheading || 'None'}"]: `) || targetSlide.subheading || "";
           const newContent = await rl.question(`  Content body: `);
           
           const changeMedia = await confirm(rl, "Do you want to change the image/video for this slide?", false);
@@ -668,10 +680,17 @@ async function runSetup() {
           if (!fs.existsSync(slideDir)) fs.mkdirSync(slideDir, { recursive: true });
           fs.writeFileSync(path.join(slideDir, 'nametext.txt'), `${newHeading}\n${newContent}`, 'utf-8');
           
+          if (newSubheading) {
+            fs.writeFileSync(path.join(slideDir, 'subheading.txt'), newSubheading.trim(), 'utf-8');
+          } else {
+            const subFilePath = path.join(slideDir, 'subheading.txt');
+            if (fs.existsSync(subFilePath)) fs.rmSync(subFilePath, { force: true });
+          }
+          
           if (changeMedia && fs.existsSync(newMediaSource)) {
             const files = fs.readdirSync(slideDir);
             for (const file of files) {
-              if (file !== 'nametext.txt') fs.rmSync(path.join(slideDir, file), { force: true });
+              if (file !== 'nametext.txt' && file !== 'subheading.txt') fs.rmSync(path.join(slideDir, file), { force: true });
             }
             const filename = path.basename(newMediaSource);
             fs.copyFileSync(newMediaSource, path.join(slideDir, filename));
@@ -682,6 +701,7 @@ async function runSetup() {
           parsedConfig.slides.forEach(s => {
             if (s.folder === targetSlide.folder) {
               s.heading = newHeading;
+              s.subheading = newSubheading;
               s.content = newContent;
               s.layout = newLayout;
               s.durationInSeconds = newDuration;
@@ -702,6 +722,7 @@ async function runSetup() {
         // Append new slide
         const nextIndex = parsedConfig.slides.length + 1;
         const heading = await rl.question(`Heading for new slide: `) || `Topic ${nextIndex}`;
+        const subheading = await rl.question(`Subheading (optional, press Enter to skip): `) || "";
         const content = await rl.question(`Text content body: `);
         
         let mediaSourcePath = '';
@@ -726,6 +747,10 @@ async function runSetup() {
         if (!fs.existsSync(slideDir)) fs.mkdirSync(slideDir, { recursive: true });
 
         fs.writeFileSync(path.join(slideDir, 'nametext.txt'), `${heading}\n${content}`, 'utf-8');
+        if (subheading) {
+          fs.writeFileSync(path.join(slideDir, 'subheading.txt'), subheading.trim(), 'utf-8');
+        }
+        
         if (mediaSourcePath && fs.existsSync(mediaSourcePath)) {
           const filename = path.basename(mediaSourcePath);
           fs.copyFileSync(mediaSourcePath, path.join(slideDir, filename));
@@ -735,6 +760,7 @@ async function runSetup() {
           id: `slide_${nextIndex}`,
           folder: folderName,
           heading,
+          subheading,
           content,
           mediaSourcePath,
           mediaStartFromInSeconds,
