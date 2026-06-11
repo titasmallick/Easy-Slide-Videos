@@ -183,6 +183,8 @@ export interface VideoProps {
     size: number;
     opacity: number;
     persistent: boolean;
+    authorName?: string;
+    badgeText?: string;
   };
   titlePage: {
     show: boolean;

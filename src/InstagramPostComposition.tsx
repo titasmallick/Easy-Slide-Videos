@@ -17,6 +17,7 @@ export interface Props {
   type: "title" | "content" | "cta" | "hook";
   index?: number;
   total?: number;
+  footerText?: string;
 }
 
 const THEMES = [
@@ -45,7 +46,7 @@ const DynamicIcon: React.FC<{ name: string; size: number; color: string; style?:
   return <IconComponent size={size} color={color} style={style} />;
 };
 
-export const InstagramPostComposition: React.FC<Props> = ({ id, title, heading, content, type, index, total }) => {
+export const InstagramPostComposition: React.FC<Props> = ({ id, title, heading, content, type, index, total, footerText }) => {
   const theme = getThemeForId(id, title);
   const { width, height } = useVideoConfig();
 
@@ -239,7 +240,16 @@ export const InstagramPostComposition: React.FC<Props> = ({ id, title, heading, 
           whiteSpace: 'nowrap',
       }}>
           <h1 style={{ fontSize: 40, fontWeight: 900, color: theme.text, margin: 0, letterSpacing: -2, textShadow: '4px 4px 10px rgba(0,0,0,0.5)' }}>
-              TITAS SIR <span style={{ color: theme.primary }}>BIOLOGY</span>
+              {(() => {
+                const words = (footerText || "TITAS SIR BIOLOGY").split(" ");
+                const lastWord = words.pop() || "";
+                const leadingWords = words.join(" ");
+                return (
+                  <>
+                    {leadingWords} <span style={{ color: theme.primary }}>{lastWord}</span>
+                  </>
+                );
+              })()}
           </h1>
       </div>
     </AbsoluteFill>

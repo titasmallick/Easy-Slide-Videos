@@ -146,7 +146,7 @@ async function runSetup() {
       }
     },
     audio: { musicPath: '', volume: 0.1, loop: true, fadeInInSeconds: 2, fadeOutInSeconds: 2 },
-    branding: { showLogo: true, logoPath: '', logoText: 'TITAS SIR BIOLOGY', position: 'top-left', size: 50, opacity: 0.9, persistent: true },
+    branding: { showLogo: true, logoPath: '', logoText: 'TITAS SIR BIOLOGY', position: 'top-left', size: 50, opacity: 0.9, persistent: true, authorName: 'Titas Sir Biology', badgeText: 'BIONOTES' },
     titlePage: { show: true, style: 'standard', title: 'Dynamic Scientific Presentation', subtitle: 'Visualizing Knowledge with Precision', durationInSeconds: 3, theme: { background: 'linear-gradient(135deg, #0a0d14 0%, #1a103c 100%)', textColor: '#f8fafc', subtitleColor: '#d5d4ff' } },
     slides: [],
     endPage: { show: true, style: 'standard', title: 'Biology Tuition Classes', subtitle: 'Stop Memorizing. Start Scoring.', contact: 'Call: +91 9123774239', website: 'titassir.eugenicserudite.xyz', durationInSeconds: 4, theme: { background: 'linear-gradient(135deg, #1a103c 0%, #0a0d14 100%)', textColor: '#f8fafc', subtitleColor: '#ffbbfe' } }
@@ -268,8 +268,8 @@ async function runSetup() {
   }
 
   // STEP 4: WATERMARK / BRANDING
-  console.log(`\n${colors.fgMagenta}${colors.bright}--- [Step 3: Branding / Watermark Overlay] ---${colors.reset}`);
-  currentConfig.branding.showLogo = await confirm(rl, `🏷️ Display branding overlay/logo?`, currentConfig.branding.showLogo);
+  console.log(`\n${colors.fgMagenta}${colors.bright}--- [Step 3: Branding / Watermark Overlay & Still Typography] ---${colors.reset}`);
+  currentConfig.branding.showLogo = await confirm(rl, `🏷️ Display branding overlay/logo on the video?`, currentConfig.branding.showLogo);
   if (currentConfig.branding.showLogo) {
     currentConfig.branding.logoText = await rl.question(`✍️ Branding Text [Current: "${currentConfig.branding.logoText}"]: `) || currentConfig.branding.logoText;
     
@@ -293,6 +293,10 @@ async function runSetup() {
     currentConfig.branding.opacity = parseFloat(await rl.question(`🔮 Logo opacity (0.0 to 1.0) [Current: ${currentConfig.branding.opacity}]: `) || `${currentConfig.branding.opacity}`);
     currentConfig.branding.persistent = await confirm(rl, `🔁 Display on Intro and Outro slides too?`, currentConfig.branding.persistent);
   }
+
+  // Still/Thumbnail Custom Typography
+  currentConfig.branding.authorName = await rl.question(`✍️ Author/Creator Name (for thumbnail/stills footer) [Current: "${currentConfig.branding.authorName || 'Titas Sir Biology'}"]: `) || currentConfig.branding.authorName || "Titas Sir Biology";
+  currentConfig.branding.badgeText = await rl.question(`🏷️ Badge/Category text (for thumbnail top-badge) [Current: "${currentConfig.branding.badgeText || 'BIONOTES'}"]: `) || currentConfig.branding.badgeText || "BIONOTES";
 
   // STEP 5: AUDIO SETTINGS
   console.log(`\n${colors.fgMagenta}${colors.bright}--- [Step 4: Background Music & Audio] ---${colors.reset}`);
@@ -608,6 +612,9 @@ async function runSetup() {
           parsedConfig.branding.opacity = parseFloat(await rl.question(`🔮 Opacity [Current: ${parsedConfig.branding.opacity}]: `) || `${parsedConfig.branding.opacity}`);
           parsedConfig.branding.persistent = await confirm(rl, `🔁 Persistent overlay?`, parsedConfig.branding.persistent);
         }
+
+        parsedConfig.branding.authorName = await rl.question(`✍️ Author/Creator Name [Current: "${parsedConfig.branding.authorName || 'Titas Sir Biology'}"]: `) || parsedConfig.branding.authorName || "Titas Sir Biology";
+        parsedConfig.branding.badgeText = await rl.question(`🏷️ Badge/Category text [Current: "${parsedConfig.branding.badgeText || 'BIONOTES'}"]: `) || parsedConfig.branding.badgeText || "BIONOTES";
 
         parsedConfig.audio.volume = parseFloat(await rl.question(`🔊 Music Volume [Current: ${parsedConfig.audio.volume}]: `) || `${parsedConfig.audio.volume}`);
         parsedConfig.audio.fadeInInSeconds = parseFloat(await rl.question(`⏳ Fade-In Duration [Current: ${parsedConfig.audio.fadeInInSeconds}]: `) || `${parsedConfig.audio.fadeInInSeconds}`);

@@ -44,7 +44,8 @@ export const RemotionRoot: React.FC = () => {
           title: config.titlePage.title || "Biology Fact",
           heading: config.titlePage.subtitle || "Did You Know?",
           content: config.slides[0]?.content || "Sample content goes here.",
-          type: "content"
+          type: "content",
+          footerText: config.branding.authorName || config.branding.logoText || "TITAS SIR BIOLOGY"
         } as any}
       />
 
@@ -60,7 +61,9 @@ export const RemotionRoot: React.FC = () => {
           id: "thumb",
           title: config.titlePage.title || "Cell Cycle",
           subtitle: config.titlePage.subtitle || "And Cell Division",
-          className: config.branding.logoText || "TITAS SIR"
+          className: config.branding.logoText || "TITAS SIR",
+          authorName: config.branding.authorName || "TITAS SIR BIOLOGY",
+          badgeText: config.branding.badgeText || "BIONOTES"
         }}
       />
 
@@ -83,7 +86,11 @@ export const RemotionRoot: React.FC = () => {
             { heading: "Did You Know?", content: "Sample hook.", durationInFrames: 300 },
             { heading: "The Science", content: "Sample explanation.", durationInFrames: 300 },
             { heading: "Quick Tip", content: "Sample outro.", durationInFrames: 300 }
-          ]
+          ],
+          authorName: config.branding.logoText || "Titas Sir",
+          phoneNumber: config.endPage.contact || "9123774239",
+          extraText: config.endPage.subtitle || "BIOLOGY 2026-27",
+          musicPath: config.audio.musicPath || "assets/music/background.mp3"
         } as any}
       />
 
@@ -112,6 +119,8 @@ export const RemotionRoot: React.FC = () => {
               content: "Chromosomes condense and become visible.",
             },
           ],
+          websiteUrl: config.endPage.website || "bionotes-liard.vercel.app",
+          musicPath: config.audio.musicPath || "assets/music/background.mp3"
         } as any}
       />
     </>

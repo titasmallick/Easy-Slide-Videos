@@ -26,6 +26,8 @@ export interface Props {
   title: string;
   sections: Section[];
   category?: string;
+  websiteUrl?: string;
+  musicPath?: string;
 }
 
 const THEME = {
@@ -41,8 +43,8 @@ const THEME = {
   shadow: "rgba(0, 0, 0, 0.6)",
 };
 
-const BackgroundMusic: React.FC = () => {
-  return <Audio src={staticFile("music/background.mp3")} volume={0.15} loop />;
+const BackgroundMusic: React.FC<{ musicPath?: string }> = ({ musicPath }) => {
+  return <Audio src={staticFile(musicPath || "music/background.mp3")} volume={0.15} loop />;
 };
 
 const BackgroundEffects: React.FC = () => {
@@ -115,7 +117,7 @@ const TeaserSlide: React.FC<{ section: Section; title: string }> = ({ section, t
   );
 };
 
-const CTASlide: React.FC<{ title: string }> = ({ title }) => {
+const CTASlide: React.FC<{ title: string; websiteUrl?: string }> = ({ title, websiteUrl }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const entrance = spring({ frame, fps, config: { damping: 12, stiffness: 120 } });
@@ -150,7 +152,7 @@ const CTASlide: React.FC<{ title: string }> = ({ title }) => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 15, width: '100%' }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: THEME.text }}>Get PDF Notes at:</div>
-              <div style={{ background: 'white', color: '#000', padding: '12px', borderRadius: 15, fontWeight: 900, fontSize: 18 }}>bionotes-liard.vercel.app</div>
+              <div style={{ background: 'white', color: '#000', padding: '12px', borderRadius: 15, fontWeight: 900, fontSize: 18 }}>{websiteUrl || "bionotes-liard.vercel.app"}</div>
           </div>
 
           <div style={{ 
@@ -168,7 +170,7 @@ const CTASlide: React.FC<{ title: string }> = ({ title }) => {
     );
 };
 
-export const TeaserReelComposition: React.FC<Props> = ({ title, sections }) => {
+export const TeaserReelComposition: React.FC<Props> = ({ title, sections, websiteUrl, musicPath }) => {
   const { fps } = useVideoConfig();
   
   // --- SMART SECTION SELECTION ---
@@ -209,7 +211,7 @@ export const TeaserReelComposition: React.FC<Props> = ({ title, sections }) => {
   
   return (
     <AbsoluteFill style={{ backgroundColor: THEME.background }}>
-      <BackgroundMusic />
+      <BackgroundMusic musicPath={musicPath} />
       <Series>
         {teaserSections.map((section, index) => (
           <Series.Sequence key={index} durationInFrames={sectionDuration}>
@@ -217,7 +219,7 @@ export const TeaserReelComposition: React.FC<Props> = ({ title, sections }) => {
           </Series.Sequence>
         ))}
         <Series.Sequence durationInFrames={ctaDuration}>
-          <CTASlide title={title} />
+          <CTASlide title={title} websiteUrl={websiteUrl} />
         </Series.Sequence>
       </Series>
     </AbsoluteFill>

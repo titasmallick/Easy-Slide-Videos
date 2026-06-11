@@ -26,6 +26,10 @@ export interface Props {
   title: string;
   sections: Section[];
   category?: string;
+  authorName?: string;
+  phoneNumber?: string;
+  extraText?: string;
+  musicPath?: string;
 }
 
 // 10 PREMIUM CATCHY THEMES
@@ -329,7 +333,7 @@ const ShortSlide: React.FC<{
   );
 };
 
-const ShortsCTA: React.FC<{ progressAtStart: number; totalDuration: number; theme: any }> = ({ progressAtStart, totalDuration, theme }) => {
+const ShortsCTA: React.FC<{ progressAtStart: number; totalDuration: number; authorName?: string; phoneNumber?: string; extraText?: string; theme: any }> = ({ progressAtStart, totalDuration, authorName, phoneNumber, extraText, theme }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const entrance = spring({ frame, fps, config: { damping: 10, stiffness: 100 } });
@@ -361,15 +365,17 @@ const ShortsCTA: React.FC<{ progressAtStart: number; totalDuration: number; them
                 gap: 50,
             }}>
                 <h1 style={{ fontSize: 90, fontWeight: 900, color: theme.primary, margin: 0, letterSpacing: -5 }}>
-                    Titas Sir
+                    {authorName || "Titas Sir"}
                 </h1>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div style={{ background: theme.primary, padding: '20px 30px', borderRadius: 25, border: `4px solid ${theme.background}` }}>
-                        <span style={{ fontSize: 42, fontWeight: 900, color: theme.background }}>📞 9123774239</span>
+                        <span style={{ fontSize: 42, fontWeight: 900, color: theme.background }}>
+                            {phoneNumber ? (phoneNumber.includes('📞') ? phoneNumber : "📞 " + phoneNumber) : "📞 9123774239"}
+                        </span>
                     </div>
                     <div style={{ fontSize: 30, fontWeight: 800, color: theme.secondary, textTransform: 'uppercase', letterSpacing: 4 }}>
-                        BIOLOGY 2026-27
+                        {extraText || "BIOLOGY 2026-27"}
                     </div>
                 </div>
 
@@ -389,7 +395,7 @@ const ShortsCTA: React.FC<{ progressAtStart: number; totalDuration: number; them
     );
 };
 
-export const ShortsComposition: React.FC<Props> = ({ id, title, sections }) => {
+export const ShortsComposition: React.FC<Props> = ({ id, title, sections, authorName, phoneNumber, extraText, musicPath }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const ctaDuration = 150;
@@ -408,7 +414,7 @@ export const ShortsComposition: React.FC<Props> = ({ id, title, sections }) => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: theme.background }}>
-      <Audio src={staticFile("music/background.mp3")} volume={volume} loop />
+      {musicPath && <Audio src={staticFile(musicPath)} volume={volume} loop />}
       <Series>
         {sections.map((section, index) => {
           const duration = section.durationInFrames || 300;
@@ -431,6 +437,9 @@ export const ShortsComposition: React.FC<Props> = ({ id, title, sections }) => {
             <ShortsCTA 
                 progressAtStart={currentStart / totalFrames} 
                 totalDuration={totalFrames}
+                authorName={authorName}
+                phoneNumber={phoneNumber}
+                extraText={extraText}
                 theme={theme} 
             />
         </Series.Sequence>

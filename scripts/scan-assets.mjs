@@ -246,7 +246,9 @@ async function scan() {
       position: 'top-left',
       size: 50,
       opacity: 0.9,
-      persistent: true
+      persistent: true,
+      authorName: 'Titas Sir Biology',
+      badgeText: 'BIONOTES'
     },
     titlePage: {
       show: true,

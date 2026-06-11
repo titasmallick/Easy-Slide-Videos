@@ -14,6 +14,8 @@ export interface Props {
   title: string;
   subtitle?: string;
   className?: string;
+  authorName?: string;
+  badgeText?: string;
 }
 
 const THEMES = [
@@ -53,7 +55,7 @@ const DynamicIcon: React.FC<{ name: string; size: number; color: string; style?:
   return <IconComponent size={size} color={color} style={style} />;
 };
 
-export const ThumbnailComposition: React.FC<Props> = ({ id, title, subtitle, className }) => {
+export const ThumbnailComposition: React.FC<Props> = ({ id, title, subtitle, className, authorName, badgeText }) => {
   const theme = getThemeForClass(className || "");
   const { width, height } = useVideoConfig();
 
@@ -180,7 +182,7 @@ export const ThumbnailComposition: React.FC<Props> = ({ id, title, subtitle, cla
               <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                   <div style={{ background: theme.accent, width: 30, height: 30, borderRadius: '50%' }} />
                   <span style={{ fontSize: 40, fontWeight: 900, color: theme.primary, textTransform: 'uppercase' }}>
-                      Titas Sir Biology
+                      {authorName || "Titas Sir Biology"}
                   </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 30 }}>
@@ -198,7 +200,7 @@ export const ThumbnailComposition: React.FC<Props> = ({ id, title, subtitle, cla
                       letterSpacing: 2,
                       boxShadow: `8px 8px 0px rgba(0,0,0,0.3)`,
                   }}>
-                      BIONOTES
+                      {badgeText || "BIONOTES"}
                   </div>
               </div>
           </div>
