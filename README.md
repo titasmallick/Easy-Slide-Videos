@@ -1,6 +1,8 @@
-# Dynamic Video Generator
+# Easy-Slide-Videos 🎬
 
 A self-contained, customizable, and automated video generation project built using **Remotion** and **React**. It scans your assets dynamically, populates a configuration file, and renders high-quality videos with animated backgrounds, clean typography, glassmorphism cards, and smooth transitions.
+
+![Easy-Slide-Videos Showcase](out/showcase.gif)
 
 ---
 
@@ -14,7 +16,11 @@ A self-contained, customizable, and automated video generation project built usi
 - **Dynamic Configuration**: Edit `config.json` to customize video resolution, theme colors, background music, branding overlays, title pages, slide orders, and end-credits.
 - **Premium Aesthetics**: High-contrast minimal layouts with responsive glassmorphism containers, smooth spring entrance animations, and slow color-blob shifts.
 - **Smart Aspect-Ratio Fill**: Portrait assets are rendered over a blurred full-bleed background to fit landscape videos seamlessly.
-- **Audio Fades**: Configurable music fade-in (at start) and fade-out (at end) durations.
+- **Audio Fades & Dynamic Ducking**: Configurable music fade-in/out. Supports slide-level voiceover tracks (e.g. `voiceover.mp3` inside slide asset folders) with automatic background audio ducking (music volume drops to 15% during voiceover playback).
+- **Automated Subtitle (SRT/VTT) Parser**: Automatically parses `.srt` or `.vtt` files in slide directories to map word-by-word highlights (`lines`) and calibrate slide duration to match the audio.
+- **Collage Grid Layouts**: Renders multiple slide media assets (images/videos) in an elegant, responsive CSS Grid collage.
+- **Interactive Web Dashboard**: Run a local web app to visually edit slides, manage themes, re-order scenes, and render compositions with real-time progress.
+- **Premium Transition Pack**: Seven transition filters including `fade`, `slide-left`, `slide-right`, `slide-up`, `slide-down`, `zoom-reveal`, and `glitch-blur`.
 - **Cross-Platform**: Works out of the box on Windows, macOS, and Linux.
 
 ---
@@ -22,7 +28,7 @@ A self-contained, customizable, and automated video generation project built usi
 ## 📁 Project Structure
 
 ```text
-balerkaj/
+easy-slide-videos/
 ├── assets/
 │   ├── music/
 │   │   └── paulyudin-background-music-478744.mp3
@@ -179,7 +185,7 @@ The video generator is fully capable of rendering **any aspect ratio**:
 
 ---
 
-## 🤖 Interactive Agent Setup CLI ("Balerkaj Bot")
+## 🤖 Interactive Agent Setup CLI ("Easy-Slide-Videos Bot")
 
 To automate your setup, call the conversational setup bot. It guides you step-by-step through configuring your presentation.
 
@@ -189,7 +195,7 @@ If you are pair programming with an AI coding assistant (like Gemini, Claude, An
 > **Initial Command to the Agent:**
 > `"Hello bot, I want to configure and render a video in this folder. Please run the interactive setup agent by executing npm.cmd run setup (or node scripts/setup-agent.mjs), and walk me through the prompts, ask questions, copy slide media assets, scan them, and then render the video and still thumbnails for me."`
 
-Or, you can run the CLI helper manually in your terminal inside the `balerkaj/` folder:
+Or, you can run the CLI helper manually in your terminal:
 ```bash
 npm run setup
 ```
@@ -208,6 +214,14 @@ npm run setup
 ---
 
 ## 📽️ Preview and Render
+
+### 🌐 Visual Configuration Web Dashboard
+Easy-Slide-Videos features a beautiful, local web application to configure your slideshows and render them without touching JSON files.
+To boot it up:
+```bash
+npm run dashboard
+```
+Open **`http://localhost:3000`** (or `http://localhost:3001` if EADDRINUSE is resolved) in your browser to start editing visually.
 
 ### Live Developer Preview Studio
 Open the interactive Remotion studio to preview your video layout in real-time as you make changes to assets or config:

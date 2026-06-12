@@ -365,17 +365,17 @@ const ShortsCTA: React.FC<{ progressAtStart: number; totalDuration: number; auth
                 gap: 50,
             }}>
                 <h1 style={{ fontSize: 90, fontWeight: 900, color: theme.primary, margin: 0, letterSpacing: -5 }}>
-                    {authorName || "Titas Sir"}
+                    {authorName || "Author"}
                 </h1>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div style={{ background: theme.primary, padding: '20px 30px', borderRadius: 25, border: `4px solid ${theme.background}` }}>
                         <span style={{ fontSize: 42, fontWeight: 900, color: theme.background }}>
-                            {phoneNumber ? (phoneNumber.includes('📞') ? phoneNumber : "📞 " + phoneNumber) : "📞 9123774239"}
+                            {phoneNumber ? (phoneNumber.includes('📞') ? phoneNumber : "📞 " + phoneNumber) : "Easy-Slide-Videos"}
                         </span>
                     </div>
                     <div style={{ fontSize: 30, fontWeight: 800, color: theme.secondary, textTransform: 'uppercase', letterSpacing: 4 }}>
-                        {extraText || "BIOLOGY 2026-27"}
+                        {extraText || "SLIDESHOW"}
                     </div>
                 </div>
 

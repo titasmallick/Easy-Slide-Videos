@@ -60,11 +60,11 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{
           id: "insta-post",
-          title: config.titlePage.title || "Biology Fact",
-          heading: config.titlePage.subtitle || "Did You Know?",
+          title: config.titlePage.title || "Slideshow Title",
+          heading: config.titlePage.subtitle || "Introduction",
           content: config.slides[0]?.content || "Sample content goes here.",
           type: "content",
-          footerText: config.branding.authorName || config.branding.logoText || "TITAS SIR BIOLOGY"
+          footerText: config.branding.authorName || config.branding.logoText || "SLIDESHOW ENGINE"
         } as any}
       />
 
@@ -78,12 +78,12 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{
           id: "thumb",
-          title: config.titlePage.title || "Official School Anthem",
-          subtitle: config.branding.authorName || config.titlePage.subtitle || "Pearls Of God School",
-          className: config.branding.logoText || "School Anthem",
-          authorName: config.branding.authorName || "Pearls Of God",
-          badgeText: config.branding.badgeText || "ANTHEM",
-          iconName: config.video.iconName || "Music",
+          title: config.titlePage.title || "Slideshow Title",
+          subtitle: config.branding.authorName || config.titlePage.subtitle || "Easy-Slide-Videos",
+          className: config.branding.logoText || "SLIDESHOW ENGINE",
+          authorName: config.branding.authorName || "Easy-Slide-Videos",
+          badgeText: config.branding.badgeText || "DEMO",
+          iconName: config.video.iconName || "Video",
           themeName: config.video.themeName || "neon-emerald"
         }}
       />
@@ -98,12 +98,12 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={{
           id: "reels-thumb",
-          title: configReels.titlePage?.title || "Official School Anthem",
-          subtitle: configReels.branding?.authorName || configReels.titlePage?.subtitle || "Pearls Of God School",
-          className: configReels.branding?.logoText || "School Anthem",
-          authorName: configReels.branding?.authorName || "Pearls Of God",
-          badgeText: configReels.branding?.badgeText || "ANTHEM",
-          iconName: configReels.video?.iconName || "Music",
+          title: configReels.titlePage?.title || "Slideshow Title",
+          subtitle: configReels.branding?.authorName || configReels.titlePage?.subtitle || "Easy-Slide-Videos",
+          className: configReels.branding?.logoText || "SLIDESHOW ENGINE",
+          authorName: configReels.branding?.authorName || "Easy-Slide-Videos",
+          badgeText: configReels.branding?.badgeText || "DEMO",
+          iconName: configReels.video?.iconName || "Video",
           themeName: configReels.video?.themeName || "radiant-gold"
         }}
       />
@@ -128,9 +128,9 @@ export const RemotionRoot: React.FC = () => {
             { heading: "The Science", content: "Sample explanation.", durationInFrames: 300 },
             { heading: "Quick Tip", content: "Sample outro.", durationInFrames: 300 }
           ],
-          authorName: config.branding.logoText || "Titas Sir",
-          phoneNumber: config.endPage.contact || "9123774239",
-          extraText: config.endPage.subtitle || "BIOLOGY 2026-27",
+          authorName: config.branding.logoText || "Author",
+          phoneNumber: config.endPage.contact || "Easy-Slide-Videos",
+          extraText: config.endPage.subtitle || "SLIDESHOW",
           musicPath: config.audio.musicPath || "assets/music/background.mp3"
         } as any}
       />

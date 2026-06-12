@@ -144,9 +144,11 @@ export interface SlideData {
   endTime?: number;
   durationInSeconds: number;
   mediaStartFromInSeconds?: number;
-  layout: 'split-media-right' | 'split-media-left' | 'full-background-media' | 'text-only' | 'media-only';
+  layout: 'split-media-right' | 'split-media-left' | 'full-background-media' | 'text-only' | 'media-only' | 'grid-collage';
   transition: string;
   lines?: Array<Array<{ text: string; relStart: number; relEnd: number }>>;
+  voiceover?: string;
+  mediaList?: string[];
 }
 
 export interface VideoProps {
@@ -1200,7 +1202,7 @@ const KaraokeText: React.FC<{
   );
 };
 
-// Content Slide Component with Responsive Aspect-Ratio Support
+// Content Slide Component with Responsive Aspect-Ratio Support and Custom Transitions
 const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: number; theme: Theme; fontFamily: string; fontWeight: string; disableAnimations?: boolean }> = ({ slide, index, totalSlides, theme, fontFamily, fontWeight, disableAnimations }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames, width, height } = useVideoConfig();
@@ -1212,163 +1214,171 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
   
   const exitFrames = 15;
   const exitStart = durationInFrames - exitFrames;
-  const opacity = disableAnimations
-    ? 1
-    : frame >= exitStart
-      ? interpolate(frame, [exitStart, durationInFrames - 1], [1, 0], { extrapolateLeft: 'clamp' })
-      : 1;
 
   const textTranslateY = interpolate(entrance, [0, 1], [40, 0]);
   const mediaScale = interpolate(entrance, [0, 1], [0.95, 1]);
 
   const isHeadingOnly = !slide.content && !slide.media;
-  const contentFontSize = slide.content.length > 200 ? 30 : slide.content.length > 100 ? 36 : 42;
+  const contentFontSize = slide.content ? (slide.content.length > 200 ? 30 : slide.content.length > 100 ? 36 : 42) : 36;
 
-  const renderTextContent = () => (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      flex: 1.2,
-      transform: `translateY(${textTranslateY}px)`,
-    }}>
-      {slide.heading && (
-        <h2 style={{
-          fontFamily,
-          fontSize: isHeadingOnly ? (isPortrait ? 70 : 90) : 54,
-          fontWeight: 900,
-          color: theme.primary,
-          margin: '0 0 24px 0',
-          lineHeight: 1.15,
-          letterSpacing: -1.5,
-        }}>
-          <ReactMarkdown
-            components={{
-              strong: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900}} {...props} />,
-              em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
-              del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
-              a: ({node, href, ...props}) => {
-                if (href === 'highlight') {
-                  return (
-                    <span 
-                      style={{
-                        textDecoration: 'none', 
-                        background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, 
-                        borderBottom: `3px solid ${theme.accent}`, 
-                        padding: '2px 6px', 
-                        borderRadius: '4px', 
-                        fontWeight: 900
-                      }} 
-                      {...props} 
-                    />
-                  );
-                }
-                return <a href={href} style={{ color: theme.primary }} {...props} />;
-              },
-              code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
-              p: ({node, ...props}) => <span {...props} />,
-            }}
-          >
-            {slide.heading.replace(/~~(.*?)~~/g, "[$1](highlight)")}
-          </ReactMarkdown>
-        </h2>
-      )}
-      {slide.subheading && (
-        <h3 style={{
-          fontFamily,
-          fontSize: isPortrait ? 24 : 32,
-          fontWeight: 700,
-          color: theme.secondary,
-          margin: '-12px 0 24px 0',
-          lineHeight: 1.2,
-          letterSpacing: -0.5,
-          opacity: 0.9,
-        }}>
-          <ReactMarkdown
-            components={{
-              strong: ({node, ...props}) => <span style={{color: theme.primary, fontWeight: 900}} {...props} />,
-              em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
-              del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
-              a: ({node, href, ...props}) => {
-                if (href === 'highlight') {
-                  return (
-                    <span 
-                      style={{
-                        textDecoration: 'none', 
-                        background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, 
-                        borderBottom: `3px solid ${theme.accent}`, 
-                        padding: '2px 6px', 
-                        borderRadius: '4px', 
-                        fontWeight: 900
-                      }} 
-                      {...props} 
-                    />
-                  );
-                }
-                return <a href={href} style={{ color: theme.primary }} {...props} />;
-              },
-              code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
-              p: ({node, ...props}) => <span {...props} />,
-            }}
-          >
-            {slide.subheading.replace(/~~(.*?)~~/g, "[$1](highlight)")}
-          </ReactMarkdown>
-        </h3>
-      )}
-      {slide.lines ? (
-        <KaraokeText
-          lines={slide.lines}
-          currentFrame={frame}
-          fps={fps}
-          theme={theme}
-          fontFamily={fontFamily}
-          fontWeight={fontWeight}
-        />
-      ) : slide.content && (
-        <div style={{
-          fontFamily,
-          fontSize: isPortrait ? contentFontSize * 0.85 : contentFontSize,
-          color: theme.text,
-          lineHeight: 1.5,
-          fontWeight: (fontWeight as any) || 600,
-          opacity: 0.95
-        }}>
-          <ReactMarkdown
-            components={{
-              strong: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900}} {...props} />,
-              em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
-              del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
-              a: ({node, href, ...props}) => {
-                if (href === 'highlight') {
-                  return (
-                    <span 
-                      style={{
-                        textDecoration: 'none', 
-                        background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, 
-                        borderBottom: `3px solid ${theme.accent}`, 
-                        padding: '2px 6px', 
-                        borderRadius: '4px', 
-                        fontWeight: 900
-                      }} 
-                      {...props} 
-                    />
-                  );
-                }
-                return <a href={href} style={{ color: theme.primary }} {...props} />;
-              },
-              code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
-              p: ({node, ...props}) => <p style={{margin: '0 0 16px 0'}} {...props} />,
-              ul: ({node, ...props}) => <ul style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'square' }} {...props} />,
-              ol: ({node, ...props}) => <ol style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'decimal' }} {...props} />,
-              li: ({node, ...props}) => <li style={{marginBottom: 10}} {...props} />,
-            }}
-          >
-            {slide.content.replace(/~~(.*?)~~/g, "[$1](highlight)")}
-          </ReactMarkdown>
-        </div>
-      )}
-    </div>
-  );
+  const renderTextContent = () => {
+    if (!slide.heading && !slide.subheading && !slide.content) return null;
+    return (
+      <div style={{
+        flex: 1.2,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        textAlign: 'left',
+        transform: `translateY(${textTranslateY}px)`,
+        paddingRight: isPortrait ? 0 : 20,
+        zIndex: 10,
+      }}>
+        {slide.heading && (
+          <h2 style={{
+            fontFamily,
+            fontSize: isPortrait ? 48 : 56,
+            fontWeight: 800,
+            color: theme.primary,
+            margin: '0 0 16px 0',
+            lineHeight: 1.1,
+            letterSpacing: -1,
+            textShadow: `0 4px 12px ${theme.primary}25`,
+          }}>
+            <ReactMarkdown
+              components={{
+                strong: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900}} {...props} />,
+                em: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
+                del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
+                a: ({node, href, ...props}) => {
+                  if (href === 'highlight') {
+                    return (
+                      <span 
+                        style={{
+                          textDecoration: 'none', 
+                          background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, 
+                          borderBottom: `3px solid ${theme.accent}`, 
+                          padding: '2px 6px', 
+                          borderRadius: '4px', 
+                          fontWeight: 900
+                        }} 
+                        {...props} 
+                      />
+                    );
+                  }
+                  return <a href={href} style={{ color: theme.primary }} {...props} />;
+                },
+                code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
+                p: ({node, ...props}) => <span {...props} />,
+              }}
+            >
+              {slide.heading.replace(/~~(.*?)~~/g, "[$1](highlight)")}
+            </ReactMarkdown>
+          </h2>
+        )}
+        {slide.subheading && (
+          <h3 style={{
+            fontFamily,
+            fontSize: isPortrait ? 28 : 32,
+            fontWeight: 700,
+            color: theme.secondary,
+            margin: '-12px 0 24px 0',
+            lineHeight: 1.2,
+            letterSpacing: -0.5,
+            opacity: 0.9,
+          }}>
+            <ReactMarkdown
+              components={{
+                strong: ({node, ...props}) => <span style={{color: theme.primary, fontWeight: 900}} {...props} />,
+                em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
+                del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
+                a: ({node, href, ...props}) => {
+                  if (href === 'highlight') {
+                    return (
+                      <span 
+                        style={{
+                          textDecoration: 'none', 
+                          background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, 
+                          borderBottom: `3px solid ${theme.accent}`, 
+                          padding: '2px 6px', 
+                          borderRadius: '4px', 
+                          fontWeight: 900
+                        }} 
+                        {...props} 
+                      />
+                    );
+                  }
+                  return <a href={href} style={{ color: theme.primary }} {...props} />;
+                },
+                code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
+                p: ({node, ...props}) => <span {...props} />,
+              }}
+            >
+              {slide.subheading.replace(/~~(.*?)~~/g, "[$1](highlight)")}
+            </ReactMarkdown>
+          </h3>
+        )}
+        {slide.lines ? (
+          <KaraokeText
+            lines={slide.lines}
+            currentFrame={frame}
+            fps={fps}
+            theme={theme}
+            fontFamily={fontFamily}
+            fontWeight={fontWeight}
+          />
+        ) : slide.content && (
+          <div style={{
+            fontFamily,
+            fontSize: isPortrait ? contentFontSize * 0.85 : contentFontSize,
+            color: theme.text,
+            lineHeight: 1.5,
+            fontWeight: (fontWeight as any) || 600,
+            opacity: 0.95
+          }}>
+            <ReactMarkdown
+              components={{
+                strong: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900}} {...props} />,
+                em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
+                del: ({node, ...props}) => <span style={{textDecoration: 'none', background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, borderBottom: `3px solid ${theme.accent}`, padding: '2px 6px', borderRadius: '4px', fontWeight: 900}} {...props} />,
+                a: ({node, href, ...props}) => {
+                  if (href === 'highlight') {
+                    return (
+                      <span 
+                        style={{
+                          textDecoration: 'none', 
+                          background: `linear-gradient(120deg, ${theme.accent}35 0%, ${theme.accent}15 100%)`, 
+                          borderBottom: `3px solid ${theme.accent}`, 
+                          padding: '2px 6px', 
+                          borderRadius: '4px', 
+                          fontWeight: 900
+                        }} 
+                        {...props} 
+                      />
+                    );
+                  }
+                  return <a href={href} style={{ color: theme.primary }} {...props} />;
+                },
+                code: ({node, ...props}) => <span style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${theme.border}`, padding: '2px 6px', borderRadius: '6px', color: theme.primary, fontSize: '0.9em', fontWeight: 700}} {...props} />,
+                p: ({node, ...props}) => <p style={{margin: '0 0 16px 0'}} {...props} />,
+                ul: ({node, ...props}) => <ul style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'square' }} {...props} />,
+                ol: ({node, ...props}) => <ol style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'decimal' }} {...props} />,
+                li: ({node, ...props}) => <li style={{marginBottom: 10}} {...props} />,
+              }}
+            >
+              {slide.content.replace(/~~(.*?)~~/g, "[$1](highlight)")}
+            </ReactMarkdown>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const getSlideMediaType = (filename: string): 'image' | 'video' => {
+    const ext = filename.split('.').pop()?.toLowerCase() || '';
+    if (['mp4', 'webm', 'mov', 'mkv', 'avi'].includes(ext)) return 'video';
+    return 'image';
+  };
 
   const renderMedia = () => {
     if (!slide.media || !slide.mediaType) return null;
@@ -1391,10 +1401,76 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
     );
   };
 
+  const renderMediaCollage = () => {
+    const list = slide.mediaList || (slide.media ? [slide.media] : []);
+    if (list.length === 0) return null;
+    if (list.length === 1) return renderMedia();
+
+    let gridStyle: React.CSSProperties = {
+      display: 'grid',
+      gap: '20px',
+      width: '100%',
+      height: '100%',
+      flex: 1,
+    };
+    
+    if (list.length === 2) {
+      gridStyle.gridTemplateColumns = '1fr 1fr';
+    } else if (list.length === 3) {
+      gridStyle.gridTemplateColumns = '1.2fr 1fr';
+      gridStyle.gridTemplateRows = '1fr 1fr';
+    } else {
+      gridStyle.gridTemplateColumns = '1fr 1fr';
+      gridStyle.gridTemplateRows = '1fr 1fr';
+    }
+
+    return (
+      <div style={gridStyle}>
+        {list.map((m, idx) => {
+          const gridArea = (list.length === 3 && idx === 0) ? { gridRow: 'span 2' } : {};
+          const isVideo = getSlideMediaType(m) === 'video';
+          return (
+            <div 
+              key={idx} 
+              style={{
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '20px',
+                border: `2px solid ${theme.border}`,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                width: '100%',
+                ...gridArea
+              }}
+            >
+              <MediaRenderer 
+                path={m} 
+                type={isVideo ? 'video' : 'image'} 
+                startFromInSeconds={0}
+                style={{ width: '100%', height: '100%', borderRadius: 0, border: 'none' }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const getLayout = () => {
     // Responsive stacked view for portrait resolutions (like Shorts/Reels)
     if (isPortrait) {
       if (slide.layout === 'media-only') return <div style={{ height: '100%', width: '100%' }}>{renderMedia()}</div>;
+      if (slide.layout === 'grid-collage') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 30, height: '100%', width: '100%', alignItems: 'stretch' }}>
+            {renderMediaCollage()}
+            {renderTextContent()}
+          </div>
+        );
+      }
       if (slide.layout === 'text-only') return <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', width: '100%', textAlign: 'center', padding: 40 }}>{renderTextContent()}</div>;
       if (slide.layout === 'full-background-media') {
         return (
@@ -1421,6 +1497,13 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
 
     // Standard Landscape layout
     switch (slide.layout) {
+      case 'grid-collage':
+        return (
+          <div style={{ display: 'flex', gap: 60, height: '100%', width: '100%', alignItems: 'stretch' }}>
+            {renderTextContent()}
+            {renderMediaCollage()}
+          </div>
+        );
       case 'split-media-left':
         return (
           <div style={{ display: 'flex', gap: 60, height: '100%', width: '100%', alignItems: 'stretch' }}>
@@ -1504,46 +1587,101 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
   const entranceProgress = disableAnimations
     ? 1
     : spring({ frame, fps, config: { damping: 14, stiffness: 100 } });
-  const entranceTranslateX = disableAnimations ? 0 : interpolate(entranceProgress, [0, 1], [40, 0]);
-  const entranceScale = disableAnimations ? 1 : interpolate(entranceProgress, [0, 1], [0.98, 1]);
-  const entranceOpacity = disableAnimations
-    ? 1
-    : interpolate(frame, [0, 10], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-
+  
   const exitProgress = disableAnimations
     ? 0
     : spring({ frame: Math.max(0, frame - exitStart), fps, config: { damping: 14, stiffness: 100 } });
-  const exitTranslateX = disableAnimations ? 0 : interpolate(exitProgress, [0, 1], [0, -40]);
-  const exitScale = disableAnimations ? 1 : interpolate(exitProgress, [0, 1], [1, 0.98]);
-  const exitOpacity = disableAnimations
-    ? 1
-    : frame >= exitStart
+
+  let combinedTranslateX = 0;
+  let combinedTranslateY = 0;
+  let combinedScale = 1;
+  let combinedOpacity = 1;
+  let combinedBlur = 0;
+
+  const transition = slide.transition || 'fade';
+  
+  if (disableAnimations) {
+    combinedTranslateX = 0;
+    combinedTranslateY = 0;
+    combinedScale = 1;
+    combinedOpacity = 1;
+  } else {
+    // Basic Opacity calculations
+    const entranceOpacity = interpolate(frame, [0, 10], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+    const exitOpacity = frame >= exitStart
       ? interpolate(frame, [exitStart, durationInFrames - 1], [1, 0], { extrapolateLeft: 'clamp' })
       : 1;
+    combinedOpacity = entranceOpacity * exitOpacity;
 
-  const combinedTranslateX = entranceTranslateX + exitTranslateX;
-  const combinedScale = entranceScale * exitScale;
-  const combinedOpacity = entranceOpacity * exitOpacity;
+    if (transition === 'slide-left') {
+      const entranceTranslateX = interpolate(entranceProgress, [0, 1], [400, 0]);
+      const exitTranslateX = interpolate(exitProgress, [0, 1], [0, -400]);
+      combinedTranslateX = entranceTranslateX + exitTranslateX;
+      combinedScale = interpolate(entranceProgress, [0, 1], [0.99, 1]) * interpolate(exitProgress, [0, 1], [1, 0.99]);
+    } else if (transition === 'slide-right') {
+      const entranceTranslateX = interpolate(entranceProgress, [0, 1], [-400, 0]);
+      const exitTranslateX = interpolate(exitProgress, [0, 1], [0, 400]);
+      combinedTranslateX = entranceTranslateX + exitTranslateX;
+      combinedScale = interpolate(entranceProgress, [0, 1], [0.99, 1]) * interpolate(exitProgress, [0, 1], [1, 0.99]);
+    } else if (transition === 'slide-up') {
+      const entranceTranslateY = interpolate(entranceProgress, [0, 1], [400, 0]);
+      const exitTranslateY = interpolate(exitProgress, [0, 1], [0, -400]);
+      combinedTranslateY = entranceTranslateY + exitTranslateY;
+      combinedScale = interpolate(entranceProgress, [0, 1], [0.99, 1]) * interpolate(exitProgress, [0, 1], [1, 0.99]);
+    } else if (transition === 'slide-down') {
+      const entranceTranslateY = interpolate(entranceProgress, [0, 1], [-400, 0]);
+      const exitTranslateY = interpolate(exitProgress, [0, 1], [0, 400]);
+      combinedTranslateY = entranceTranslateY + exitTranslateY;
+      combinedScale = interpolate(entranceProgress, [0, 1], [0.99, 1]) * interpolate(exitProgress, [0, 1], [1, 0.99]);
+    } else if (transition === 'zoom-reveal') {
+      const entranceScale = interpolate(entranceProgress, [0, 1], [0.80, 1]);
+      const exitScale = interpolate(exitProgress, [0, 1], [1, 1.20]);
+      combinedScale = entranceScale * exitScale;
+    } else if (transition === 'glitch-blur') {
+      const entranceScale = interpolate(entranceProgress, [0, 1], [0.95, 1]);
+      const exitScale = interpolate(exitProgress, [0, 1], [1, 0.95]);
+      combinedScale = entranceScale * exitScale;
+      combinedBlur = frame < 12 
+        ? interpolate(frame, [0, 12], [25, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) 
+        : frame >= exitStart 
+          ? interpolate(frame, [exitStart, durationInFrames - 1], [0, 25], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
+          : 0;
+    } else {
+      // Default 'fade' / spring transition
+      const entranceTranslateX = interpolate(entranceProgress, [0, 1], [40, 0]);
+      const entranceScale = interpolate(entranceProgress, [0, 1], [0.98, 1]);
+      const exitTranslateX = interpolate(exitProgress, [0, 1], [0, -40]);
+      const exitScale = interpolate(exitProgress, [0, 1], [1, 0.98]);
+      
+      combinedTranslateX = entranceTranslateX + exitTranslateX;
+      combinedScale = entranceScale * exitScale;
+    }
+  }
 
   return (
     <AbsoluteFill style={{ padding: isPortrait ? 40 : 75 }}>
       <BackgroundEffects theme={theme} />
       
+      {slide.voiceover && (
+        <Audio src={staticFile(slide.voiceover)} volume={1.0} />
+      )}
+
       {/* Slide Glass Container */}
       {slide.layout !== 'full-background-media' && (
         <div style={{
           width: '100%',
           height: '100%',
           background: theme.cardBg,
-          backdropFilter: 'blur(35px)',
+          backdropFilter: combinedBlur > 0 ? `blur(${35 + combinedBlur}px)` : 'blur(35px)',
           borderRadius: isPortrait ? 36 : 48,
           border: `6px solid ${theme.primary}`,
           padding: isPortrait ? '40px 30px' : '60px 75px',
           boxShadow: '0 25px 50px rgba(0, 0, 0, 0.45)',
           overflow: 'hidden',
           position: 'relative',
-          transform: `translateX(${combinedTranslateX}px) scale(${combinedScale})`,
+          transform: `translate(${combinedTranslateX}px, ${combinedTranslateY}px) scale(${combinedScale})`,
           opacity: combinedOpacity,
+          filter: combinedBlur > 0 ? `blur(${combinedBlur}px)` : undefined,
         }}>
           {getLayout()}
         </div>
@@ -1554,8 +1692,9 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
           width: '100%',
           height: '100%',
           position: 'relative',
-          transform: `translateX(${combinedTranslateX}px) scale(${combinedScale})`,
+          transform: `translate(${combinedTranslateX}px, ${combinedTranslateY}px) scale(${combinedScale})`,
           opacity: combinedOpacity,
+          filter: combinedBlur > 0 ? `blur(${combinedBlur}px)` : undefined,
         }}>
           {getLayout()}
         </div>
@@ -2129,14 +2268,56 @@ export const Video: React.FC<VideoProps> = (config) => {
   const fadeInFrames = (audio.fadeInInSeconds ?? 2) * fps;
   const fadeOutFrames = (audio.fadeOutInSeconds ?? 2) * fps;
   
-  let musicVolume = audio.volume ?? 0.1;
-  
+  // Audio ducking calculation:
+  // Build slide frame ranges where a voiceover is active
+  const duckingRanges = slides
+    .map(slide => {
+      if (!slide.voiceover) return null;
+      const startFrame = Math.round((slide.startTime ?? 0) * fps);
+      const endFrame = startFrame + Math.round(slide.durationInSeconds * fps);
+      return { start: startFrame, end: endFrame };
+    })
+    .filter((r): r is { start: number; end: number } => r !== null);
+
+  const baseVolume = audio.volume ?? 0.1;
+  const duckedVolume = baseVolume * 0.15; // Duck down to 15% volume
+  const duckFadeFrames = 15; // Smooth 0.5s transition for ducking
+
+  let currentDuckedVolume = baseVolume;
+  const activeDuckedRange = duckingRanges.find(
+    range => currentFrame >= range.start - duckFadeFrames && currentFrame <= range.end + duckFadeFrames
+  );
+
+  if (activeDuckedRange) {
+    if (currentFrame < activeDuckedRange.start) {
+      // Ducking fade-down
+      currentDuckedVolume = interpolate(
+        currentFrame,
+        [activeDuckedRange.start - duckFadeFrames, activeDuckedRange.start],
+        [baseVolume, duckedVolume],
+        { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+      );
+    } else if (currentFrame > activeDuckedRange.end) {
+      // Ducking fade-up
+      currentDuckedVolume = interpolate(
+        currentFrame,
+        [activeDuckedRange.end, activeDuckedRange.end + duckFadeFrames],
+        [duckedVolume, baseVolume],
+        { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+      );
+    } else {
+      currentDuckedVolume = duckedVolume;
+    }
+  }
+
+  let musicVolume = baseVolume;
+
   if (currentFrame < fadeInFrames && fadeInFrames > 0) {
     // Fade in at start
     musicVolume = interpolate(
       currentFrame,
       [0, fadeInFrames],
-      [0, audio.volume ?? 0.1],
+      [0, currentDuckedVolume],
       { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
     );
   } else if (currentFrame >= totalDuration - fadeOutFrames && fadeOutFrames > 0) {
@@ -2144,9 +2325,11 @@ export const Video: React.FC<VideoProps> = (config) => {
     musicVolume = interpolate(
       currentFrame,
       [totalDuration - fadeOutFrames, totalDuration - 5],
-      [audio.volume ?? 0.1, 0],
+      [currentDuckedVolume, 0],
       { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
     );
+  } else {
+    musicVolume = currentDuckedVolume;
   }
 
   return (

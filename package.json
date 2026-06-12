@@ -1,5 +1,5 @@
 {
-  "name": "balerkaj-video-maker",
+  "name": "easy-slide-videos",
   "version": "1.0.0",
   "description": "Self-contained dynamic video generator using Remotion",
   "main": "scripts/render.mjs",
@@ -10,6 +10,7 @@
     "scan": "node scripts/scan-assets.mjs",
     "render": "node scripts/render.mjs",
     "studio": "npx.cmd remotion studio",
+    "dashboard": "node scripts/dashboard.mjs",
     "build": "npx.cmd remotion bundle src/index.ts out/bundle.js"
   },
   "dependencies": {

@@ -20,7 +20,7 @@ const themes = [
   "radiant-gold"
 ];
 
-const targetRepoOut = "D:\\GITHUB\\BalerKaj\\out";
+const targetRepoOut = path.join(projectRoot, 'out');
 
 function renderTheme(theme) {
   return new Promise((resolve, reject) => {

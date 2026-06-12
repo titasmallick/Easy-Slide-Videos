@@ -210,12 +210,12 @@ export const ThumbnailComposition: React.FC<Props> = ({ id, title, subtitle, cla
               <div style={{ display: 'flex', alignItems: 'center', gap: isPortrait ? 12 : 20 }}>
                   <div style={{ background: theme.accent, width: isPortrait ? 16 : 30, height: isPortrait ? 16 : 30, borderRadius: '50%' }} />
                   <span style={{ fontSize: isPortrait ? 26 : 40, fontWeight: 900, color: theme.primary, textTransform: 'uppercase' }}>
-                      {authorName || "Titas Sir Biology"}
+                      {authorName || "Easy-Slide-Videos"}
                   </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: isPortrait ? 15 : 30, width: isPortrait ? '100%' : 'auto', justifyContent: isPortrait ? 'space-between' : 'flex-start' }}>
                   <div style={{ transform: 'rotate(-5deg)' }}>
-                      <DynamicIcon name={iconName || "Microscope"} size={isPortrait ? 60 : 100} color={theme.primary} />
+                      <DynamicIcon name={iconName || "Video"} size={isPortrait ? 60 : 100} color={theme.primary} />
                   </div>
                   <div style={{
                       background: theme.primary,

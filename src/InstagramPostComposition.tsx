@@ -241,7 +241,7 @@ export const InstagramPostComposition: React.FC<Props> = ({ id, title, heading, 
       }}>
           <h1 style={{ fontSize: 40, fontWeight: 900, color: theme.text, margin: 0, letterSpacing: -2, textShadow: '4px 4px 10px rgba(0,0,0,0.5)' }}>
               {(() => {
-                const words = (footerText || "TITAS SIR BIOLOGY").split(" ");
+                const words = (footerText || "SLIDESHOW ENGINE").split(" ");
                 const lastWord = words.pop() || "";
                 const leadingWords = words.join(" ");
                 return (

@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Slide Videos - Engine Dashboard</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <!-- React CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <!-- Babel CDN for browser transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    /* Neon Glow Effects */
+    .neon-border {
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.05);
+    }
+    .neon-glow-btn {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .neon-glow-btn:hover {
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+    }
+    /* Glassmorphism card */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen">
+
+  <div id="root"></div>
+
+  <!-- React Dashboard Component -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function SlideImagePreview({ src }) {
+      const [hasError, setHasError] = useState(false);
+
+      useEffect(() => {
+        setHasError(false);
+      }, [src]);
+
+      if (hasError) {
+        return <div className="text-emerald-400 font-mono text-[9px] font-bold">IMAGE</div>;
+      }
+      return (
+        <img 
+          src={src} 
+          onError={() => setHasError(true)} 
+          className="object-cover w-full h-full" 
+        />
+      );
+    }
+
+    function App() {
+      const [config, setConfig] = useState(null);
+      const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+      const [selectedComp, setSelectedComp] = useState('MainVideo');
+      const [logOutput, setLogOutput] = useState('');
+      const [isRendering, setIsRendering] = useState(false);
+      const [isScanning, setIsScanning] = useState(false);
+      const [activeTab, setActiveTab] = useState('slides'); // 'slides' | 'global'
+      const [isPreviewRendering, setIsPreviewRendering] = useState(false);
+      const [slidePreviews, setSlidePreviews] = useState({});
+      
+      const logContainerRef = useRef(null);
+
+      const getMediaUrl = (mediaPath) => {
+        if (!mediaPath) return '';
+        const cleaned = mediaPath.replace(/\\/g, '/').replace(/^\/+/, '');
+        return '/' + cleaned;
+      };
+
+      // Load config.json on mount
+      useEffect(() => {
+        fetchConfig();
+      }, []);
+
+      // Scroll logs to bottom
+      useEffect(() => {
+        if (logContainerRef.current) {
+          logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+        }
+      }, [logOutput]);
+
+      const fetchConfig = async () => {
+        try {
+          const res = await fetch('/api/config');
+          if (!res.ok) throw new Error('Failed to load config.json');
+          const data = await res.json();
+          setConfig(data);
+          if (data.slides && data.slides.length > 0) {
+            setActiveSlideIndex(0);
+          }
+        } catch (err) {
+          showLog(`❌ Error loading configuration: ${err.message}\n`);
+        }
+      };
+
+      const saveConfig = async (updatedConfig = config) => {
+        try {
+          const res = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedConfig)
+          });
+          const result = await res.json();
+          if (result.success) {
+            showLog(`💾 Configuration saved successfully!\n`);
+            setConfig({ ...updatedConfig });
+          } else {
+            showLog(`❌ Save failed: ${result.error}\n`);
+          }
+        } catch (err) {
+          showLog(`❌ Error saving configuration: ${err.message}\n`);
+        }
+      };
+
+      const triggerScan = async () => {
+        setIsScanning(true);
+        setLogOutput('⚡ Starting Assets Scan...\n');
+        try {
+          const res = await fetch('/api/scan', { method: 'POST' });
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value);
+            setLogOutput(prev => prev + chunk);
+          }
+          await fetchConfig();
+        } catch (err) {
+          setLogOutput(prev => prev + `❌ Scanner Error: ${err.message}\n`);
+        } finally {
+          setIsScanning(false);
+        }
+      };
+
+      const triggerRender = async () => {
+        setIsRendering(true);
+        setLogOutput('');
+        try {
+          const res = await fetch(`/api/render?composition=${selectedComp}`, { method: 'POST' });
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value);
+            setLogOutput(prev => prev + chunk);
+          }
+        } catch (err) {
+          setLogOutput(prev => prev + `❌ Renderer Error: ${err.message}\n`);
+        } finally {
+          setIsRendering(false);
+        }
+      };
+
+      const generatePreview = async () => {
+        setIsPreviewRendering(true);
+        try {
+          const res = await fetch('/api/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slideIndex: activeSlideIndex,
+              composition: 'MainVideo'
+            })
+          });
+          if (!res.ok) throw new Error('Preview compilation failed');
+          const data = await res.json();
+          if (data.success) {
+            setSlidePreviews(prev => ({
+              ...prev,
+              [activeSlideIndex]: data.url
+            }));
+            
+            // Re-initialize icons inside preview card
+            setTimeout(() => {
+              lucide.createIcons();
+            }, 100);
+          }
+        } catch (err) {
+          alert(`❌ Preview Error: ${err.message}`);
+        } finally {
+          setIsPreviewRendering(false);
+        }
+      };
+
+      const showLog = (text) => {
+        setLogOutput(prev => prev + text);
+      };
+
+      // Slide manipulation helpers
+      const updateSlideField = (index, field, value) => {
+        const updatedSlides = [...config.slides];
+        updatedSlides[index] = { ...updatedSlides[index], [field]: value };
+        const updatedConfig = { ...config, slides: updatedSlides };
+        setConfig(updatedConfig);
+      };
+
+      const moveSlide = (index, direction) => {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= config.slides.length) return;
+
+        const updatedSlides = [...config.slides];
+        const temp = updatedSlides[index];
+        updatedSlides[index] = updatedSlides[newIndex];
+        updatedSlides[newIndex] = temp;
+
+        // Recalculate start times based on slide durations
+        let currentOffset = config.titlePage?.show ? config.titlePage.durationInSeconds : 0;
+        const finalSlides = updatedSlides.map(s => {
+          const updatedSlide = { ...s, startTime: currentOffset };
+          currentOffset += s.durationInSeconds;
+          return updatedSlide;
+        });
+
+        const updatedConfig = { ...config, slides: finalSlides };
+        setConfig(updatedConfig);
+        setActiveSlideIndex(newIndex);
+        saveConfig(updatedConfig);
+      };
+
+      const deleteSlide = (index) => {
+        if (!confirm('Are you sure you want to remove this slide?')) return;
+        const updatedSlides = config.slides.filter((_, idx) => idx !== index);
+        
+        // Recalculate start times
+        let currentOffset = config.titlePage?.show ? config.titlePage.durationInSeconds : 0;
+        const finalSlides = updatedSlides.map(s => {
+          const updatedSlide = { ...s, startTime: currentOffset };
+          currentOffset += s.durationInSeconds;
+          return updatedSlide;
+        });
+
+        const updatedConfig = { ...config, slides: finalSlides };
+        setConfig(updatedConfig);
+        if (activeSlideIndex >= finalSlides.length) {
+          setActiveSlideIndex(Math.max(0, finalSlides.length - 1));
+        }
+        saveConfig(updatedConfig);
+      };
+
+      if (!config) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500 border-r-2 border-transparent"></div>
+            <p className="mt-4 text-emerald-400 font-semibold tracking-wider">LOADING EASY SLIDE ENGINE...</p>
+          </div>
+        );
+      }
+
+      const activeSlide = config.slides[activeSlideIndex];
+
+      return (
+        <div className="flex flex-col min-h-screen">
+          {/* Header */}
+          <header className="glass-card sticky top-0 z-50 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
+                <i data-lucide="video" className="w-6 h-6 text-emerald-400"></i>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                  Easy Slide Videos
+                  <span className="text-xs px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full font-mono">v1.1.0</span>
+                </h1>
+                <p className="text-xs text-gray-400">Interactive slide composition editor & automated Remotion renderer</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={triggerScan}
+                disabled={isScanning || isRendering}
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 hover:border-gray-600 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-50 transition-all"
+              >
+                <span className={isScanning ? 'animate-spin' : ''}>
+                  <i data-lucide="refresh-cw" className="w-4 h-4"></i>
+                </span>
+                Scan Assets
+              </button>
+              <button 
+                onClick={() => saveConfig()}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold flex items-center gap-2 neon-glow-btn transition-all"
+              >
+                <i data-lucide="save" className="w-4 h-4"></i>
+                Save Configuration
+              </button>
+            </div>
+          </header>
+
+          {/* Main workspace */}
+          <div className="flex-1 flex overflow-hidden">
+            
+            {/* Left sidebar: Slides list */}
+            <aside className="w-80 border-r border-gray-800 flex flex-col bg-gray-950/20">
+              <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+                <div className="flex bg-gray-900/50 p-0.5 rounded-lg border border-gray-800/80 w-full">
+                  <button 
+                    onClick={() => setActiveTab('slides')}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'slides' ? 'bg-gray-800 text-emerald-400 shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
+                  >
+                    Slides ({config.slides?.length || 0})
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('global')}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'global' ? 'bg-gray-800 text-emerald-400 shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
+                  >
+                    Global Settings
+                  </button>
+                </div>
+              </div>
+
+              {activeTab === 'slides' ? (
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {config.slides.map((slide, idx) => (
+                    <div 
+                      key={slide.id}
+                      onClick={() => setActiveSlideIndex(idx)}
+                      className={`group p-3.5 rounded-xl border cursor-pointer transition-all ${activeSlideIndex === idx ? 'bg-emerald-950/20 border-emerald-500/40 shadow-sm shadow-emerald-500/5' : 'bg-gray-900/20 border-gray-800/50 hover:bg-gray-900/40 hover:border-gray-800'}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] font-mono font-bold bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">Slide {idx + 1}</span>
+                            <span className="text-[10px] font-mono text-emerald-400">{slide.durationInSeconds}s</span>
+                            {slide.voiceover && <span><i data-lucide="mic" className="w-3 h-3 text-amber-400" title="Has Voiceover"></i></span>}
+                            {slide.lines && <span><i data-lucide="music" className="w-3 h-3 text-cyan-400" title="Has Karaoke Timings"></i></span>}
+                          </div>
+                          <h3 className="text-sm font-semibold truncate text-white">{slide.heading || slide.id}</h3>
+                          <p className="text-xs text-gray-400 truncate mt-0.5">{slide.content || <i>No slide text content</i>}</p>
+                        </div>
+                        {slide.media && (
+                          <div className="w-12 h-12 rounded-lg bg-black border border-gray-800 overflow-hidden flex items-center justify-center flex-shrink-0">
+                            {slide.mediaType === 'video' ? (
+                              <div className="text-emerald-400 font-mono text-[9px] font-bold">VIDEO</div>
+                            ) : (
+                              <SlideImagePreview src={getMediaUrl(slide.media)} />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Action buttons (Move Up, Down, Delete) */}
+                      <div className="flex items-center justify-end gap-1.5 mt-3 pt-2 border-t border-gray-800/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); moveSlide(idx, -1); }}
+                          disabled={idx === 0}
+                          className="p-1 hover:bg-gray-800 text-gray-400 hover:text-white rounded disabled:opacity-30"
+                          title="Move Up"
+                        >
+                          <i data-lucide="arrow-up" className="w-3.5 h-3.5"></i>
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); moveSlide(idx, 1); }}
+                          disabled={idx === config.slides.length - 1}
+                          className="p-1 hover:bg-gray-800 text-gray-400 hover:text-white rounded disabled:opacity-30"
+                          title="Move Down"
+                        >
+                          <i data-lucide="arrow-down" className="w-3.5 h-3.5"></i>
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); deleteSlide(idx); }}
+                          className="p-1 hover:bg-red-950/30 text-gray-400 hover:text-red-400 rounded ml-auto"
+                          title="Delete Slide"
+                        >
+                          <i data-lucide="trash-2" className="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* Global Settings View */
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {/* Theme Presets */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Video Theme Preset</label>
+                    <select 
+                      value={config.video.themeName || 'royal-indigo'}
+                      onChange={(e) => {
+                        const updated = { ...config };
+                        updated.video.themeName = e.target.value;
+                        setConfig(updated);
+                      }}
+                      className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-emerald-500"
+                    >
+                      <option value="royal-indigo">royal-indigo (Deep Purple-indigo)</option>
+                      <option value="radiant-gold">radiant-gold (Charcoal & Yellow)</option>
+                      <option value="neon-emerald">neon-emerald (Forest Green)</option>
+                      <option value="electric-amethyst">electric-amethyst (Mystical Violet)</option>
+                      <option value="cyber-cyan">cyber-cyan (Tech Blue & Pink)</option>
+                      <option value="midnight-magenta">midnight-magenta (Wine Red & Magenta)</option>
+                      <option value="arctic-blue">arctic-blue (Ocean Blue)</option>
+                      <option value="volcanic-orange">volcanic-orange (Ash & Orange)</option>
+                      <option value="slate-silver">slate-silver (Minimal Slate Gray)</option>
+                      <option value="crimson-pulse">crimson-pulse (High contrast Alert)</option>
+                    </select>
+                  </div>
+
+                  {/* Fonts */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Font Family</label>
+                    <select 
+                      value={config.video.fontFamily || 'outfit'}
+                      onChange={(e) => {
+                        const updated = { ...config };
+                        updated.video.fontFamily = e.target.value;
+                        setConfig(updated);
+                      }}
+                      className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-emerald-500"
+                    >
+                      <option value="outfit">Outfit</option>
+                      <option value="montserrat">Montserrat</option>
+                      <option value="playfair">Playfair Display</option>
+                      <option value="inter">Inter</option>
+                      <option value="courier">Courier</option>
+                    </select>
+                  </div>
+
+                  {/* Audio details */}
+                  <div className="border-t border-gray-900 pt-4 space-y-3">
+                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Background Music</h4>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Music Path</label>
+                      <input 
+                        type="text" 
+                        value={config.audio.musicPath || ''}
+                        onChange={(e) => {
+                          const updated = { ...config };
+                          updated.audio.musicPath = e.target.value;
+                          setConfig(updated);
+                        }}
+                        className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-100 focus:outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Volume (0 to 1)</label>
+                        <input 
+                          type="number" 
+                          step="0.05"
+                          min="0"
+                          max="1"
+                          value={config.audio.volume ?? 0.1}
+                          onChange={(e) => {
+                            const updated = { ...config };
+                            updated.audio.volume = parseFloat(e.target.value);
+                            setConfig(updated);
+                          }}
+                          className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-100"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 mt-4">
+                        <input 
+                          type="checkbox" 
+                          id="audio-loop"
+                          checked={config.audio.loop ?? true}
+                          onChange={(e) => {
+                            const updated = { ...config };
+                            updated.audio.loop = e.target.checked;
+                            setConfig(updated);
+                          }}
+                          className="rounded text-emerald-500 focus:ring-0 w-4 h-4 bg-gray-900 border-gray-800"
+                        />
+                        <label htmlFor="audio-loop" className="text-xs text-gray-400">Loop Music</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Branding / Watermark */}
+                  <div className="border-t border-gray-900 pt-4 space-y-3">
+                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Logo & Branding</h4>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Branding Logo Text</label>
+                      <input 
+                        type="text" 
+                        value={config.branding.logoText || ''}
+                        onChange={(e) => {
+                          const updated = { ...config };
+                          updated.branding.logoText = e.target.value;
+                          setConfig(updated);
+                        }}
+                        className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Author Name / Badge</label>
+                      <input 
+                        type="text" 
+                        value={config.branding.authorName || ''}
+                        onChange={(e) => {
+                          const updated = { ...config };
+                          updated.branding.authorName = e.target.value;
+                          setConfig(updated);
+                        }}
+                        className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </aside>
+
+            {/* Middle panel: Slide editor form */}
+            <main className="flex-1 p-6 overflow-y-auto space-y-6">
+              {activeSlide ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Edit Slide {activeSlideIndex + 1}</h2>
+                      <p className="text-xs text-gray-400">Configure media layout, subtitle tracks, and text transitions</p>
+                    </div>
+                    <div className="text-xs font-mono bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg text-emerald-400">
+                      ID: {activeSlide.id}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left: inputs */}
+                    <div className="lg:col-span-2 space-y-6">
+
+                      {/* Text inputs */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Slide Heading</label>
+                      <input 
+                        type="text"
+                        value={activeSlide.heading || ''}
+                        onChange={(e) => updateSlideField(activeSlideIndex, 'heading', e.target.value)}
+                        className="w-full bg-gray-900/60 border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                        placeholder="Main Title text..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Slide Subheading</label>
+                      <input 
+                        type="text"
+                        value={activeSlide.subheading || ''}
+                        onChange={(e) => updateSlideField(activeSlideIndex, 'subheading', e.target.value)}
+                        className="w-full bg-gray-900/60 border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                        placeholder="Optional subtitle details..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Body Content */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Slide Content Text</label>
+                    <textarea 
+                      rows="4"
+                      value={activeSlide.content || ''}
+                      onChange={(e) => updateSlideField(activeSlideIndex, 'content', e.target.value)}
+                      className="w-full bg-gray-900/60 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
+                      placeholder="Enter slide paragraph content (Markdown formats: **Orange**, *Green*, ~~Pill Background~~, `Badge` supported)..."
+                    />
+                  </div>
+
+                  {/* Visual Layout and transition picker */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Layout */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Media Layout Mode</label>
+                      <select 
+                        value={activeSlide.layout || 'split-media-right'}
+                        onChange={(e) => updateSlideField(activeSlideIndex, 'layout', e.target.value)}
+                        className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                      >
+                        <option value="split-media-right">split-media-right (Text Left, Media Right)</option>
+                        <option value="split-media-left">split-media-left (Media Left, Text Right)</option>
+                        <option value="grid-collage">grid-collage (Collaged Multi-Media Grid)</option>
+                        <option value="full-background-media">full-background-media (Centered text box over image/video)</option>
+                        <option value="text-only">text-only (Centered large title typography)</option>
+                        <option value="media-only">media-only (Full-bleed raw asset showcase)</option>
+                      </select>
+                    </div>
+
+                    {/* Transition */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Slide Transition Reveal</label>
+                      <select 
+                        value={activeSlide.transition || 'fade'}
+                        onChange={(e) => updateSlideField(activeSlideIndex, 'transition', e.target.value)}
+                        className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                      >
+                        <option value="fade">fade (Default spring slide & opacity fade)</option>
+                        <option value="slide-left">slide-left (Pushes clean from right to left)</option>
+                        <option value="slide-right">slide-right (Pushes clean from left to right)</option>
+                        <option value="slide-up">slide-up (Rises from bottom to top)</option>
+                        <option value="slide-down">slide-down (Drops from top to bottom)</option>
+                        <option value="zoom-reveal">zoom-reveal (Sleek deep focal zoom)</option>
+                        <option value="glitch-blur">glitch-blur (Aesthetic heavy filter-blur shift)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Slide assets timing details */}
+                  <div className="bg-gray-900/30 border border-gray-800/80 rounded-xl p-4 space-y-4">
+                    <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Slide Asset & Timing Parameters</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1.5">Slide Duration (Seconds)</label>
+                        <input 
+                          type="number"
+                          step="0.1"
+                          value={activeSlide.durationInSeconds ?? 5}
+                          onChange={(e) => updateSlideField(activeSlideIndex, 'durationInSeconds', parseFloat(e.target.value))}
+                          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1.5">Voiceover Audio File Path</label>
+                        <input 
+                          type="text"
+                          value={activeSlide.voiceover || ''}
+                          onChange={(e) => updateSlideField(activeSlideIndex, 'voiceover', e.target.value)}
+                          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white"
+                          placeholder="e.g. assets/slide1/voiceover.mp3"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1.5">Primary Media File Path</label>
+                        <input 
+                          type="text"
+                          value={activeSlide.media || ''}
+                          onChange={(e) => updateSlideField(activeSlideIndex, 'media', e.target.value)}
+                          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white"
+                          placeholder="e.g. assets/slide1/image.png"
+                        />
+                      </div>
+                    </div>
+
+                    {activeSlide.mediaList && activeSlide.mediaList.length > 0 && (
+                      <div className="pt-2 border-t border-gray-800">
+                        <label className="block text-xs text-gray-400 mb-1.5">Media Assets Grid List (Collage Items)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {activeSlide.mediaList.map((m, mIdx) => (
+                            <div key={mIdx} className="flex items-center gap-1.5 px-3 py-1 bg-gray-900 border border-gray-800 rounded-lg text-xs font-mono">
+                              <span>{m}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    </div>
+
+                    {/* Right: Live Slide Preview */}
+                    <div className="space-y-4">
+                      <div className="glass-card border border-gray-800 rounded-2xl p-4 sticky top-6 space-y-4">
+                        <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+                          <span>Live Slide Preview</span>
+                          {slidePreviews[activeSlideIndex] && (
+                            <span className="text-[10px] font-mono text-gray-500 font-normal">settled state</span>
+                          )}
+                        </h3>
+                        
+                        <div className="aspect-video w-full rounded-xl bg-black border border-gray-900 overflow-hidden flex items-center justify-center relative group">
+                          {slidePreviews[activeSlideIndex] ? (
+                            <img src={slidePreviews[activeSlideIndex]} className="w-full h-full object-contain" />
+                          ) : (
+                            <div className="text-center p-4">
+                              <span className="inline-block p-3 bg-gray-900/60 rounded-full border border-gray-800 text-gray-400 mb-2">
+                                <i data-lucide="image" className="w-6 h-6"></i>
+                              </span>
+                              <p className="text-xs text-gray-400">No preview compiled for this slide yet.</p>
+                            </div>
+                          )}
+                          
+                          {isPreviewRendering && (
+                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-10">
+                              <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-r-transparent"></div>
+                              <span className="text-xs text-emerald-400 font-mono">Compiling Still...</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={generatePreview}
+                          disabled={isPreviewRendering}
+                          className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                        >
+                          <span>
+                            <i data-lucide="eye" className="w-3.5 h-3.5"></i>
+                          </span>
+                          {slidePreviews[activeSlideIndex] ? 'Regenerate Preview' : 'Generate Frame Preview'}
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Select a slide from the sidebar to begin editing.
+                </div>
+              )}
+            </main>
+
+            {/* Right sidebar: Remotion Compiler console logs */}
+            <aside className="w-96 border-l border-gray-800 flex flex-col bg-gray-950/20">
+              <div className="p-4 border-b border-gray-800">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <i data-lucide="cpu" className="w-4 h-4 text-emerald-400"></i>
+                  Remotion Compiler
+                </h3>
+                <p className="text-xs text-gray-400">Select composition size and trigger video building</p>
+              </div>
+
+              {/* Render controls */}
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1.5">Select Video Format</label>
+                  <select 
+                    value={selectedComp}
+                    onChange={(e) => setSelectedComp(e.target.value)}
+                    className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="MainVideo">Main Presentation (16:9 Landscape - 1920x1080)</option>
+                    <option value="Reels">Reels / Shorts (9:16 Portrait - 1080x1920)</option>
+                    <option value="InstagramPost">Instagram Post (1:1 Square - 1080x1080)</option>
+                    <option value="Thumbnail">Thumbnail (16:9 Still - 1920x1080)</option>
+                    <option value="ReelsThumbnail">Reels Cover (9:16 Still - 1080x1920)</option>
+                  </select>
+                </div>
+
+                <button 
+                  onClick={triggerRender}
+                  disabled={isRendering || isScanning}
+                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-xl font-bold flex items-center justify-center gap-2 neon-glow-btn disabled:opacity-50 transition-all shadow-lg shadow-emerald-500/10"
+                >
+                  {isRendering ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-r-transparent"></div>
+                      Compiling Video...
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        <i data-lucide="play" className="w-4 h-4 fill-current"></i>
+                      </span>
+                      Trigger Video Render
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Terminal Logs Output */}
+              <div className="flex-1 flex flex-col p-4 pt-0 overflow-hidden">
+                <label className="block text-xs text-gray-400 mb-1.5 font-semibold">Real-time Compiler Output</label>
+                <div 
+                  ref={logContainerRef}
+                  className="flex-1 bg-black border border-gray-950 font-mono text-xs p-3.5 rounded-xl overflow-y-auto text-emerald-400 space-y-1 select-text"
+                  style={{ textShadow: '0 0 5px rgba(16, 185, 129, 0.15)' }}
+                >
+                  {logOutput ? (
+                    <pre className="whitespace-pre-wrap leading-relaxed">{logOutput}</pre>
+                  ) : (
+                    <div className="text-gray-600 italic">No compile logs. Trigger a video render to stream compiler details...</div>
+                  )}
+                </div>
+              </div>
+            </aside>
+
+          </div>
+        </div>
+      );
+    }
+
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error("ErrorBoundary caught an error", error, errorInfo);
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div className="p-8 bg-red-950/20 border border-red-500/30 rounded-2xl max-w-xl mx-auto my-12 text-white">
+              <h2 className="text-lg font-bold text-red-400 mb-2">Something went wrong</h2>
+              <pre className="text-xs font-mono bg-black/40 p-4 rounded-lg overflow-auto border border-red-500/10 text-red-300">
+                {this.state.error?.toString() || "Unknown Error"}
+              </pre>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-4 px-4 py-2 bg-red-800 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-all"
+              >
+                Reload Page
+              </button>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
+
+    // Initialize lucide icons after react render
+    setTimeout(() => {
+      lucide.createIcons();
+    }, 1000);
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# Agent Instructions - BalerKaj Video Generator
+# Agent Instructions - Easy-Slide-Videos Generator
 
 This project is a custom slideshow video generator built with Remotion and React. Future AI assistants working on this codebase must adhere to the instructions and guidelines outlined below.
 

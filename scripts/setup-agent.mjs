@@ -3,7 +3,7 @@ import path from 'path';
 import readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
+import { execSync, spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,11 +84,30 @@ async function runSetup() {
   
   console.clear();
   console.log(`${colors.fgCyan}${colors.bright}================================================================`);
-  console.log(`🤖   BALERKAJ BOT: INTERACTIVE VIDEO ENGINE ASSISTANT   🤖`);
+  console.log(`🤖   EASY-SLIDE-VIDEOS BOT: INTERACTIVE ASSISTANT   🤖`);
   console.log(`================================================================${colors.reset}\n`);
   
-  console.log(`Hello sir, I am Balerkaj Bot! Let me guide you through setting up`);
+  console.log(`Hello sir, I am the Easy-Slide-Videos Bot! Let me guide you through setting up`);
   console.log(`and rendering your customized video presentation today.\n`);
+
+  const wantDashboard = await confirm(rl, "Would you like to run the Web Dashboard Editor instead of configuring here in the terminal?", true);
+  if (wantDashboard) {
+    console.log(`\n🚀 Starting Web Dashboard Server...`);
+    rl.close();
+    
+    const subprocess = spawn('node', ['scripts/dashboard.mjs'], {
+      cwd: projectRoot,
+      detached: true,
+      stdio: 'inherit'
+    });
+    subprocess.unref();
+    
+    console.log(`\n================================================================`);
+    console.log(`👉 Web Dashboard Server is launching!`);
+    console.log(`👉 Please check: http://localhost:3000 (or http://localhost:3001) in your browser.`);
+    console.log(`================================================================\n`);
+    return;
+  }
 
   const legacyAssetsDir = path.join(projectRoot, 'assets');
   const assetsDir = path.join(projectRoot, 'public', 'assets');
@@ -146,10 +165,10 @@ async function runSetup() {
       }
     },
     audio: { musicPath: '', volume: 0.1, loop: true, fadeInInSeconds: 2, fadeOutInSeconds: 2 },
-    branding: { showLogo: true, logoPath: '', logoText: 'TITAS SIR BIOLOGY', position: 'top-left', size: 50, opacity: 0.9, persistent: true, authorName: 'Titas Sir Biology', badgeText: 'BIONOTES' },
-    titlePage: { show: true, style: 'standard', title: 'Dynamic Scientific Presentation', subtitle: 'Visualizing Knowledge with Precision', durationInSeconds: 3, theme: { background: 'linear-gradient(135deg, #0a0d14 0%, #1a103c 100%)', textColor: '#f8fafc', subtitleColor: '#d5d4ff' } },
+    branding: { showLogo: true, logoPath: '', logoText: 'SLIDESHOW ENGINE', position: 'top-left', size: 50, opacity: 0.9, persistent: true, authorName: 'Easy-Slide-Videos', badgeText: 'DEMO' },
+    titlePage: { show: true, style: 'standard', title: 'Dynamic Presentation Generator', subtitle: 'Create high-fidelity videos from slide structures', durationInSeconds: 3, theme: { background: 'linear-gradient(135deg, #0a0d14 0%, #1a103c 100%)', textColor: '#f8fafc', subtitleColor: '#94a3b8' } },
     slides: [],
-    endPage: { show: true, style: 'standard', title: 'Biology Tuition Classes', subtitle: 'Stop Memorizing. Start Scoring.', contact: 'Call: +91 9123774239', website: 'titassir.eugenicserudite.xyz', durationInSeconds: 4, theme: { background: 'linear-gradient(135deg, #1a103c 0%, #0a0d14 100%)', textColor: '#f8fafc', subtitleColor: '#ffbbfe' } }
+    endPage: { show: true, style: 'standard', title: 'Easy-Slide-Videos', subtitle: 'Automate slideshow rendering with React and Remotion', contact: 'https://github.com/titasmallick/Easy-Slide-Videos', website: 'github.com', durationInSeconds: 4, theme: { background: 'linear-gradient(135deg, #1a103c 0%, #0a0d14 100%)', textColor: '#f8fafc', subtitleColor: '#94a3b8' } }
   };
 
   if (fs.existsSync(configPath)) {
@@ -295,8 +314,8 @@ async function runSetup() {
   }
 
   // Still/Thumbnail Custom Typography
-  currentConfig.branding.authorName = await rl.question(`✍️ Author/Creator Name (for thumbnail/stills footer) [Current: "${currentConfig.branding.authorName || 'Titas Sir Biology'}"]: `) || currentConfig.branding.authorName || "Titas Sir Biology";
-  currentConfig.branding.badgeText = await rl.question(`🏷️ Badge/Category text (for thumbnail top-badge) [Current: "${currentConfig.branding.badgeText || 'BIONOTES'}"]: `) || currentConfig.branding.badgeText || "BIONOTES";
+  currentConfig.branding.authorName = await rl.question(`✍️ Author/Creator Name (for thumbnail/stills footer) [Current: "${currentConfig.branding.authorName || 'Easy-Slide-Videos'}"]: `) || currentConfig.branding.authorName || "Easy-Slide-Videos";
+  currentConfig.branding.badgeText = await rl.question(`🏷️ Badge/Category text (for thumbnail top-badge) [Current: "${currentConfig.branding.badgeText || 'DEMO'}"]: `) || currentConfig.branding.badgeText || "DEMO";
 
   // STEP 5: AUDIO SETTINGS
   console.log(`\n${colors.fgMagenta}${colors.bright}--- [Step 4: Background Music & Audio] ---${colors.reset}`);
@@ -486,7 +505,7 @@ async function runSetup() {
     console.log(`\n${colors.fgGreen}${colors.bright}✅ Video configuration and asset structures compiled successfully!${colors.reset}`);
     
     console.log(`\n${colors.fgCyan}${colors.bright}================================================================`);
-    console.log(`🔍   REVIEW MASTER CONFIGURATION   👉   BALERKAJ BOT`);
+    console.log(`🔍   REVIEW MASTER CONFIGURATION   👉   EASY-SLIDE-VIDEOS BOT`);
     console.log(`================================================================${colors.reset}`);
     console.log(`Please open and inspect the generated config.json file in your editor:`);
     console.log(`📂 Path: ${configPath}`);
@@ -538,7 +557,7 @@ async function runSetup() {
     }
 
     console.log(`\n${colors.fgCyan}${colors.bright}===================================================`);
-    console.log(`🔄   REVIEW & CHANGE LOOP   👉   BALERKAJ BOT`);
+    console.log(`🔄   REVIEW & CHANGE LOOP   👉   EASY-SLIDE-VIDEOS BOT`);
     console.log(`====================================================${colors.reset}`);
     const makeChanges = await confirm(rl, "Would you like to make adjustments or edit your slide contents?", false);
     
@@ -624,8 +643,8 @@ async function runSetup() {
           parsedConfig.branding.persistent = await confirm(rl, `🔁 Persistent overlay?`, parsedConfig.branding.persistent);
         }
 
-        parsedConfig.branding.authorName = await rl.question(`✍️ Author/Creator Name [Current: "${parsedConfig.branding.authorName || 'Titas Sir Biology'}"]: `) || parsedConfig.branding.authorName || "Titas Sir Biology";
-        parsedConfig.branding.badgeText = await rl.question(`🏷️ Badge/Category text [Current: "${parsedConfig.branding.badgeText || 'BIONOTES'}"]: `) || parsedConfig.branding.badgeText || "BIONOTES";
+        parsedConfig.branding.authorName = await rl.question(`✍️ Author/Creator Name [Current: "${parsedConfig.branding.authorName || 'Easy-Slide-Videos'}"]: `) || parsedConfig.branding.authorName || "Easy-Slide-Videos";
+        parsedConfig.branding.badgeText = await rl.question(`🏷️ Badge/Category text [Current: "${parsedConfig.branding.badgeText || 'DEMO'}"]: `) || parsedConfig.branding.badgeText || "DEMO";
 
         parsedConfig.audio.volume = parseFloat(await rl.question(`🔊 Music Volume [Current: ${parsedConfig.audio.volume}]: `) || `${parsedConfig.audio.volume}`);
         parsedConfig.audio.fadeInInSeconds = parseFloat(await rl.question(`⏳ Fade-In Duration [Current: ${parsedConfig.audio.fadeInInSeconds}]: `) || `${parsedConfig.audio.fadeInInSeconds}`);
@@ -837,12 +856,12 @@ async function runSetup() {
       }
     } else {
       setupActive = false;
-      console.log(`\nConfiguration finalized. Exiting Balerkaj Bot guide.`);
+      console.log(`\nConfiguration finalized. Exiting Easy-Slide-Videos Bot guide.`);
     }
   }
 
   rl.close();
-  console.log(`\n${colors.fgGreen}${colors.bright}🎬 Thank you for using Balerkaj Bot! Happy rendering! 🎬${colors.reset}\n`);
+  console.log(`\n${colors.fgGreen}${colors.bright}🎬 Thank you for using the Easy-Slide-Videos Bot! Happy rendering! 🎬${colors.reset}\n`);
 }
 
 runSetup().catch(console.error);
