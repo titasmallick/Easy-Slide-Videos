@@ -5,16 +5,35 @@
     "fps": 30,
     "maxCharactersPerSlide": 750,
     "themeName": "neon-emerald",
-    "theme": {},
+    "theme": {
+      "backgroundPattern": "grid",
+      "cornerDecorations": true
+    },
     "fontFamily": "outfit",
     "fontWeight": "600",
     "disableAnimations": false,
     "iconName": "Video",
     "progressBar": {
       "show": true,
+      "type": "border",
       "position": "bottom",
       "color": "",
-      "height": 8
+      "height": 8,
+      "thickness": 6,
+      "glow": true
+    },
+    "border": {
+      "show": true,
+      "color": "",
+      "width": 12,
+      "radius": 24,
+      "glow": true
+    },
+    "slideCounter": {
+      "show": true,
+      "position": "bottom-right",
+      "style": "pill",
+      "color": ""
     }
   },
   "audio": {
@@ -38,33 +57,31 @@
   "titlePage": {
     "show": true,
     "title": "Easy-Slide-Videos",
-    "subtitle": "Automated slides to high-fidelity video generator using React and Remotion",
+    "subtitle": "The complete slideshow video engine — markdown, LaTeX, charts, collages, and more",
     "durationInSeconds": 4,
     "theme": {
       "background": "linear-gradient(135deg, #0b1528 0%, #020617 100%)",
       "textColor": "#f8fafc",
       "subtitleColor": "#94a3b8"
     },
-    "style": "glassmorphic-media",
-    "media": "assets/slide_1/media1.svg",
-    "mediaType": "image"
+    "style": "glassmorphic"
   },
   "slides": [
     {
       "id": "slide_1",
       "folder": "slide_1",
-      "media": "assets/slide_1/media1.svg",
+      "media": "assets/slide_1/media1.bmp",
       "mediaType": "image",
-      "heading": "",
-      "subheading": "Option 4: Slide Transitions Packer",
-      "content": "Subtitle captions sync automatically in the layout. Try modifying this text directly inside captions.srt file!",
+      "heading": "Animated Caption Subtitles",
+      "subheading": "Real-time Word Highlights",
+      "content": "Subtitle captions sync automatically in the layout.",
       "durationInSeconds": 5,
       "mediaStartFromInSeconds": 0,
       "layout": "split-media-right",
       "transition": "zoom-reveal",
       "voiceover": "assets/slide_1/voiceover.wav",
       "mediaList": [
-        "assets/slide_1/media1.svg"
+        "assets/slide_1/media1.bmp"
       ],
       "lines": [
         [
@@ -152,85 +169,246 @@
     {
       "id": "slide_2",
       "folder": "slide_2",
-      "media": "assets/slide_2/media2.svg",
+      "media": "assets/slide_2/media2.bmp",
       "mediaType": "image",
-      "heading": "SLIDE_2",
-      "subheading": "Automated voiceover timeline synchronization",
-      "content": "",
-      "durationInSeconds": 5,
+      "heading": "Markdown & GFM Tables",
+      "subheading": "Rich Formatting Support",
+      "content": "Full markdown support: **bold**, *italic*, ~~highlight~~, `code`.",
+      "durationInSeconds": 6,
       "mediaStartFromInSeconds": 0,
       "layout": "split-media-left",
       "transition": "slide-left",
       "mediaList": [
-        "assets/slide_2/media2.svg"
+        "assets/slide_2/media2.bmp"
       ],
       "startTime": 9
     },
     {
       "id": "slide_3",
       "folder": "slide_3",
-      "media": "assets/slide_3/collage1.svg",
-      "mediaType": "image",
-      "heading": "SLIDE_3",
-      "subheading": "Responsive layouts",
-      "content": "",
+      "media": null,
+      "mediaType": null,
+      "heading": "Dynamic SVG Bar Charts",
+      "subheading": "Interactive Data Visualizations",
+      "content": "Animated bar charts render inline via the dependency-free SVG charting engine.",
       "durationInSeconds": 5,
       "mediaStartFromInSeconds": 0,
-      "layout": "grid-collage",
-      "transition": "glitch-blur",
-      "mediaList": [
-        "assets/slide_3/collage1.svg",
-        "assets/slide_3/collage2.svg"
-      ],
-      "startTime": 14
+      "layout": "chart-only",
+      "transition": "slide-up",
+      "chart": {
+        "type": "bar",
+        "data": [
+          {
+            "label": "Q1",
+            "value": 150
+          },
+          {
+            "label": "Q2",
+            "value": 240
+          },
+          {
+            "label": "Q3",
+            "value": 180
+          },
+          {
+            "label": "Q4",
+            "value": 310
+          }
+        ]
+      },
+      "startTime": 15
     },
     {
       "id": "slide_4",
       "folder": "slide_4",
       "media": null,
       "mediaType": null,
-      "heading": "SLIDE_4",
-      "subheading": "Text-Only slides",
-      "content": "",
+      "heading": "Donut & Pie Charts",
+      "subheading": "Segmented Data Distribution",
+      "content": "Visualize data splits and distributions using animated donut and pie charts.",
       "durationInSeconds": 5,
       "mediaStartFromInSeconds": 0,
-      "layout": "text-only",
-      "transition": "slide-up",
-      "startTime": 19
+      "layout": "split-media-right",
+      "transition": "glitch-blur",
+      "chart": {
+        "type": "donut",
+        "data": [
+          {
+            "label": "Direct",
+            "value": 45
+          },
+          {
+            "label": "Social",
+            "value": 25
+          },
+          {
+            "label": "Referral",
+            "value": 30
+          }
+        ]
+      },
+      "startTime": 20
     },
     {
       "id": "slide_5",
       "folder": "slide_5",
-      "media": "assets/slide_5/media5.svg",
-      "mediaType": "image",
-      "heading": "SLIDE_5",
-      "subheading": "Media-Only layouts",
-      "content": "",
+      "media": null,
+      "mediaType": null,
+      "heading": "Line Chart Trends",
+      "subheading": "Gradient Growth Curves",
+      "content": "Animated vector line charts display growth trends with labeled coordinates.",
       "durationInSeconds": 5,
       "mediaStartFromInSeconds": 0,
-      "layout": "media-only",
+      "layout": "split-media-left",
       "transition": "slide-right",
-      "mediaList": [
-        "assets/slide_5/media5.svg"
-      ],
-      "startTime": 24
+      "chart": {
+        "type": "line",
+        "data": [
+          {
+            "label": "Jan",
+            "value": 40
+          },
+          {
+            "label": "Feb",
+            "value": 85
+          },
+          {
+            "label": "Mar",
+            "value": 110
+          },
+          {
+            "label": "Apr",
+            "value": 95
+          },
+          {
+            "label": "May",
+            "value": 160
+          }
+        ]
+      },
+      "startTime": 25
     },
     {
       "id": "slide_6",
       "folder": "slide_6",
-      "media": "assets/slide_6/media6.svg",
+      "media": "assets/slide_6/collage1.bmp",
       "mediaType": "image",
-      "heading": "SLIDE_6",
-      "subheading": "Full Background Media",
-      "content": "",
+      "heading": "Responsive Media Collage",
+      "subheading": "Multi-Image Grid Layout",
+      "content": "Display multiple images in a smart aspect-ratio collage grid within one scene.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "grid-collage",
+      "transition": "fade",
+      "mediaList": [
+        "assets/slide_6/collage1.bmp",
+        "assets/slide_6/collage2.bmp"
+      ],
+      "startTime": 30
+    },
+    {
+      "id": "slide_7",
+      "folder": "slide_7",
+      "media": null,
+      "mediaType": null,
+      "heading": "LaTeX Math Equations",
+      "subheading": "Inline & Block Equation Support",
+      "content": "Render mathematical equations natively using KaTeX.",
+      "durationInSeconds": 6,
+      "mediaStartFromInSeconds": 0,
+      "layout": "text-only",
+      "transition": "slide-up",
+      "startTime": 35
+    },
+    {
+      "id": "slide_8",
+      "folder": "slide_8",
+      "media": null,
+      "mediaType": null,
+      "heading": "Slide Counter Styles",
+      "subheading": "Pill · Dots · Fraction · Minimal",
+      "content": "A configurable overlay that tracks and displays the current slide position.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "text-only",
+      "transition": "slide-left",
+      "startTime": 41
+    },
+    {
+      "id": "slide_9",
+      "folder": "slide_9",
+      "media": null,
+      "mediaType": null,
+      "heading": "Background Pattern Engine",
+      "subheading": "Grid · Dots · Diagonal · Circuit",
+      "content": "Choose from five background tile patterns to reinforce your presentation aesthetic.",
+      "durationInSeconds": 6,
+      "mediaStartFromInSeconds": 0,
+      "layout": "text-only",
+      "transition": "glitch-blur",
+      "startTime": 46
+    },
+    {
+      "id": "slide_10",
+      "folder": "slide_10",
+      "media": "assets/slide_10/media10.bmp",
+      "mediaType": "image",
+      "heading": "Cinematic Full-Bleed Overlays",
+      "subheading": "Premium Card Typography",
+      "content": "Render premium typography cards over blurred full-bleed media backdrops.",
       "durationInSeconds": 5,
       "mediaStartFromInSeconds": 0,
       "layout": "full-background-media",
       "transition": "slide-down",
       "mediaList": [
-        "assets/slide_6/media6.svg"
+        "assets/slide_10/media10.bmp"
       ],
-      "startTime": 29
+      "startTime": 52
+    },
+    {
+      "id": "slide_11",
+      "folder": "slide_11",
+      "media": null,
+      "mediaType": null,
+      "heading": "Animated Countdown Timer",
+      "subheading": "",
+      "content": "Fullscreen animated circular countdown with pulsing number and SVG ring progress.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "countdown",
+      "transition": "zoom-reveal",
+      "startTime": 57
+    },
+    {
+      "id": "slide_12",
+      "folder": "slide_12",
+      "media": null,
+      "mediaType": null,
+      "heading": "Syntax Highlighted Code Blocks",
+      "subheading": "Zero dependencies · Pure React · Remotion",
+      "content": "Display beautifully highlighted code inside a terminal-style glassmorphic panel.",
+      "durationInSeconds": 6,
+      "mediaStartFromInSeconds": 0,
+      "layout": "code-block",
+      "transition": "wipe-right",
+      "startTime": 62
+    },
+    {
+      "id": "slide_13",
+      "folder": "slide_13",
+      "media": "assets/slide_13/media13.bmp",
+      "mediaType": "image",
+      "heading": "New Transitions Showcase",
+      "subheading": "Wipe · Morph-Scale · Cube Rotate",
+      "content": "Three brand-new transitions: wipe-right clip reveal, morph-scale zoom, and 3D cube rotation.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "split-media-left",
+      "transition": "cube-rotate",
+      "mediaList": [
+        "assets/slide_13/media13.bmp"
+      ],
+      "startTime": 68
     }
   ],
   "endPage": {
@@ -246,6 +424,6 @@
       "subtitleColor": "#94a3b8"
     },
     "style": "glassmorphic",
-    "startTime": 34
+    "startTime": 73
   }
 }

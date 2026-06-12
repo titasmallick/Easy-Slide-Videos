@@ -62,6 +62,57 @@ async function confirm(rl, questionText, defaultYes = true) {
   return ans.trim().toLowerCase().startsWith('y');
 }
 
+// Helper: prompt for chart configuration
+async function promptChart(rl, layout, targetSlide = null) {
+  if (layout !== 'chart-only' && !(await confirm(rl, `  Add/Update a data chart for this slide?`, targetSlide?.chart !== undefined))) {
+    return undefined;
+  }
+  
+  console.log(`\n  Select Chart Type:`);
+  console.log(`    [1] Bar Chart`);
+  console.log(`    [2] Line Chart`);
+  console.log(`    [3] Pie Chart`);
+  console.log(`    [4] Donut Chart`);
+  
+  const currentType = targetSlide?.chart?.type || 'bar';
+  const defaultOption = currentType === 'bar' ? '1' : currentType === 'line' ? '2' : currentType === 'pie' ? '3' : '4';
+  const chartTypeChoice = await rl.question(`  Choose chart type (1-4) [Current/Default: ${currentType}]: `) || defaultOption;
+  
+  let type = 'bar';
+  if (chartTypeChoice === '2') type = 'line';
+  else if (chartTypeChoice === '3') type = 'pie';
+  else if (chartTypeChoice === '4') type = 'donut';
+
+  const defaultPointsStr = targetSlide?.chart?.data?.map(d => `${d.label}:${d.value}`).join(', ') || 'Q1:120, Q2:150, Q3:180';
+  const dataString = await rl.question(`  Enter data points as label:value pairs (comma-separated, e.g. "Q1:120, Q2:150, Q3:180") [Current/Default: "${defaultPointsStr}"]: `);
+  
+  const data = [];
+  const inputStr = dataString.trim() ? dataString : defaultPointsStr;
+  inputStr.split(',').forEach(item => {
+    const parts = item.split(':');
+    if (parts.length === 2) {
+      const label = parts[0].trim();
+      const value = parseFloat(parts[1].trim());
+      if (label && !isNaN(value)) {
+        data.push({ label, value });
+      }
+    }
+  });
+
+  if (data.length === 0) {
+    data.push({ label: 'A', value: 100 }, { label: 'B', value: 150 }, { label: 'C', value: 80 });
+  }
+
+  const currentColor = targetSlide?.chart?.color || '';
+  const customColor = await rl.question(`  Enter custom chart color hex (optional) [Current/Default: "${currentColor}"]: `);
+  
+  return {
+    type,
+    data,
+    color: customColor.trim() || currentColor.trim() || undefined
+  };
+}
+
 // Helper: clean slide folders starting with 'slide' or 'folder'
 function cleanOldSlides(assetsDir) {
   if (!fs.existsSync(assetsDir)) return;
@@ -383,11 +434,16 @@ async function runSetup() {
           mediaStartFromInSeconds = parseFloat(await rl.question(`  Start video playback from which second? [Default: 0]: `) || "0");
         }
 
-        console.log(`  Layouts: split-media-right (Default), split-media-left, full-background-media, text-only, media-only`);
+        console.log(`  Layouts: split-media-right (Default), split-media-left, full-background-media, text-only, media-only, grid-collage, chart-only, countdown, code-block`);
         const layout = await rl.question(`  Select Layout [Default: split-media-right]: `) || "split-media-right";
         
+        const chart = await promptChart(rl, layout);
+
         const defaultDur = mediaPath && getMediaType(mediaPath) === 'video' ? 8 : 5;
         const durationInSeconds = parseFloat(await rl.question(`  Slide duration in seconds [Default: ${defaultDur}]: `) || `${defaultDur}`);
+
+        console.log(`  Transitions: fade (Default), slide-left, slide-right, slide-up, slide-down, zoom-reveal, glitch-blur, wipe-right, morph-scale, cube-rotate`);
+        const transition = await rl.question(`  Select Transition [Default: fade]: `) || "fade";
 
         console.log(`\n${colors.bright}Slide Summary Preview:${colors.reset}`);
         console.log(` 👉 Title: ${heading}`);
@@ -395,6 +451,8 @@ async function runSetup() {
         console.log(` 👉 Content: ${content}`);
         console.log(` 👉 Media: ${mediaPath || 'None'}`);
         console.log(` 👉 Layout: ${layout}`);
+        console.log(` 👉 Transition: ${transition}`);
+        if (chart) console.log(` 👉 Chart: ${chart.type} chart with ${chart.data.length} points`);
         console.log(` 👉 Duration: ${durationInSeconds}s`);
 
         const slideOk = await confirm(rl, `Confirm: Is Slide ${i} correct? (Select No to retry this slide)`, true);
@@ -410,7 +468,8 @@ async function runSetup() {
             mediaStartFromInSeconds,
             layout,
             durationInSeconds,
-            transition: 'fade'
+            transition,
+            chart
           });
         }
       }
@@ -689,9 +748,11 @@ async function runSetup() {
             mediaStartFromInSeconds = parseFloat(await rl.question(`  Start video playback from which second? [Current: ${mediaStartFromInSeconds}]: `) || `${mediaStartFromInSeconds}`);
           }
 
-          console.log(`  Layouts: split-media-right, split-media-left, full-background-media, text-only, media-only`);
+          console.log(`  Layouts: split-media-right, split-media-left, full-background-media, text-only, media-only, grid-collage, chart-only`);
           const newLayout = await rl.question(`  Layout [Current: "${targetSlide.layout}"]: `) || targetSlide.layout;
           
+          const newChart = await promptChart(rl, newLayout, targetSlide);
+
           const newDuration = parseFloat(await rl.question(`  Duration in seconds [Current: ${targetSlide.durationInSeconds}]: `) || `${targetSlide.durationInSeconds}`);
 
           // Update folder text file
@@ -725,6 +786,7 @@ async function runSetup() {
               s.layout = newLayout;
               s.durationInSeconds = newDuration;
               s.mediaStartFromInSeconds = mediaStartFromInSeconds;
+              s.chart = newChart;
               if (changeMedia) {
                 s.mediaSourcePath = newMediaSource;
               }
@@ -755,9 +817,11 @@ async function runSetup() {
           mediaStartFromInSeconds = parseFloat(await rl.question(`Start video playback from which second? [Default: 0]: `) || "0");
         }
 
-        console.log(`Layouts: split-media-right, split-media-left, full-background-media, text-only, media-only`);
+        console.log(`Layouts: split-media-right, split-media-left, full-background-media, text-only, media-only, grid-collage, chart-only`);
         const layout = await rl.question(`Select Layout [Default: split-media-right]: `) || "split-media-right";
         
+        const chart = await promptChart(rl, layout);
+
         const defaultDur = mediaSourcePath && getMediaType(mediaSourcePath) === 'video' ? 8 : 5;
         const durationInSeconds = parseFloat(await rl.question(`Slide duration in seconds [Default: ${defaultDur}]: `) || `${defaultDur}`);
 
@@ -785,7 +849,8 @@ async function runSetup() {
           mediaStartFromInSeconds,
           layout,
           durationInSeconds,
-          transition: 'fade'
+          transition: 'fade',
+          chart
         });
         
         fs.writeFileSync(configPath, JSON.stringify(parsedConfig, null, 2), 'utf-8');

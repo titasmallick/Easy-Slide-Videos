@@ -9,6 +9,8 @@
     "setup": "node scripts/setup-agent.mjs",
     "scan": "node scripts/scan-assets.mjs",
     "render": "node scripts/render.mjs",
+    "render:all": "node scripts/render-all.mjs",
+    "render:reels": "npx.cmd remotion render Reels out/reels_output.mp4 --entry-point=src/index.ts --overwrite",
     "studio": "npx.cmd remotion studio",
     "dashboard": "node scripts/dashboard.mjs",
     "build": "npx.cmd remotion bundle src/index.ts out/bundle.js"
@@ -21,6 +23,9 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "remotion": "^4.0.456",
     "typescript": "^6.0.3"
   },

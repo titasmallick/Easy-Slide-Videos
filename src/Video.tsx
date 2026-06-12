@@ -13,7 +13,25 @@ import {
   Sequence,
 } from "remotion";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { loadFont as loadOutfit } from "@remotion/google-fonts/Outfit";
+
+// Inject KaTeX CSS once into the document head for LaTeX rendering
+const KATEX_CSS = `
+.katex { font-size: 1.1em; color: inherit; }
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: 8px 0; }
+.katex .base { white-space: nowrap; }
+.katex-html { display: inline; }
+.katex .mfrac .frac-line { border-bottom-color: currentColor; }
+`;
+if (typeof document !== 'undefined' && !document.getElementById('katex-remotion-css')) {
+  const style = document.createElement('style');
+  style.id = 'katex-remotion-css';
+  style.textContent = KATEX_CSS;
+  document.head.appendChild(style);
+}
 
 const outfitFont = loadOutfit();
 
@@ -37,6 +55,11 @@ export interface Theme {
   cardBg: string;
   border: string;
   fontFamily?: string;
+  // Extended customization
+  backgroundPattern?: 'none' | 'grid' | 'dots' | 'diagonal' | 'circuit';
+  cardGlassIntensity?: number; // 0–100, controls backdrop-blur and opacity
+  accentGradient?: string; // e.g. "linear-gradient(135deg, #ff6b6b, #ffd93d)"
+  cornerDecorations?: boolean; // show/hide corner bracket decorations
 }
 
 export const THEMES: Record<string, Theme> = {
@@ -144,11 +167,50 @@ export interface SlideData {
   endTime?: number;
   durationInSeconds: number;
   mediaStartFromInSeconds?: number;
-  layout: 'split-media-right' | 'split-media-left' | 'full-background-media' | 'text-only' | 'media-only' | 'grid-collage';
+  layout: 'split-media-right' | 'split-media-left' | 'full-background-media' | 'text-only' | 'media-only' | 'grid-collage' | 'chart-only' | 'countdown' | 'code-block';
   transition: string;
   lines?: Array<Array<{ text: string; relStart: number; relEnd: number }>>;
   voiceover?: string;
+  bgMusic?: string;       // Per-slide background music override path
   mediaList?: string[];
+  fontWeight?: string;
+  headingFontWeight?: string;
+  subheadingFontWeight?: string;
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  fontSize?: number;
+  headingFontSize?: number;
+  subheadingFontSize?: number;
+  textShadow?: string;
+  textStroke?: string;
+  transitionDurationInSeconds?: number;
+  overlayOpacity?: number;
+  chart?: ChartConfig;
+  codeBlock?: {
+    code: string;
+    language?: string;    // e.g. "javascript", "python", "bash" (display-only label)
+    showLineNumbers?: boolean;
+  };
+  countdownFrom?: number; // Used with layout: 'countdown' — counts down from this number
+  // Per-slide overrides
+  themeName?: string;          // Override global theme for this slide only
+  theme?: Partial<Theme>;      // Fine-grained color overrides for this slide only
+  accentColor?: string;        // Shorthand: overrides just theme.primary for this slide
+  bgVideo?: string;            // Looping ambient video behind the glass card
+  accentIcon?: string;         // Emoji or text rendered as a large ghost icon behind content
+  ticker?: string;             // Scrolling marquee text strip at the bottom of the slide
+  subtitleBurnIn?: boolean;    // Render current caption line as always-visible bottom bar
+  textAnimation?: 'none' | 'stagger' | 'pop-in' | 'reveal'; // Heading word entrance animation
+}
+
+export interface ChartDataPoint {
+  label: string;
+  value: number;
+}
+
+export interface ChartConfig {
+  type: 'bar' | 'line' | 'pie' | 'donut';
+  data: ChartDataPoint[];
+  color?: string;
 }
 
 export interface VideoProps {
@@ -164,9 +226,25 @@ export interface VideoProps {
     iconName?: string;
     progressBar?: {
       show: boolean;
-      position: 'top' | 'bottom';
+      type?: 'line' | 'border' | 'radial';
+      position?: 'top' | 'bottom';
       color?: string;
       height?: number;
+      thickness?: number;
+      glow?: boolean;
+    };
+    border?: {
+      show: boolean;
+      color?: string;
+      width?: number;
+      radius?: number;
+      glow?: boolean;
+    };
+    slideCounter?: {
+      show: boolean;
+      position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
+      style?: 'minimal' | 'pill' | 'fraction' | 'dots';
+      color?: string;
     };
   };
   audio: {
@@ -186,6 +264,10 @@ export interface VideoProps {
     persistent: boolean;
     authorName?: string;
     badgeText?: string;
+    watermarkImage?: string;   // Path to a semi-transparent watermark PNG rendered over every slide
+    watermarkOpacity?: number; // 0–1, default 0.12
+    watermarkSize?: number;    // px, default 200
+    watermarkPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
   };
   titlePage: {
     show: boolean;
@@ -200,6 +282,15 @@ export interface VideoProps {
       textColor: string;
       subtitleColor: string;
     };
+    fontWeight?: string;
+    headingFontWeight?: string;
+    subheadingFontWeight?: string;
+    textAlign?: 'left' | 'center' | 'right' | 'justify';
+    fontSize?: number;
+    headingFontSize?: number;
+    subheadingFontSize?: number;
+    textShadow?: string;
+    textStroke?: string;
   };
   slides: SlideData[];
   endPage: {
@@ -216,6 +307,15 @@ export interface VideoProps {
       textColor: string;
       subtitleColor: string;
     };
+    fontWeight?: string;
+    headingFontWeight?: string;
+    subheadingFontWeight?: string;
+    textAlign?: 'left' | 'center' | 'right' | 'justify';
+    fontSize?: number;
+    headingFontSize?: number;
+    subheadingFontSize?: number;
+    textShadow?: string;
+    textStroke?: string;
   };
 }
 
@@ -226,22 +326,53 @@ const Blob: React.FC<{ color: string; size: number; x: number; y: number; delay:
 
 // Premium dynamic background (Optimized to use native hardware CSS radial-gradients)
 const BackgroundEffects: React.FC<{ theme: Theme }> = ({ theme }) => {
+  const pattern = theme.backgroundPattern ?? 'grid';
+  const showCorners = theme.cornerDecorations !== false; // default true
+
+  const getPatternStyle = (): React.CSSProperties => {
+    switch (pattern) {
+      case 'none': return {};
+      case 'dots': return {
+        opacity: 0.07,
+        backgroundImage: `radial-gradient(${theme.primary} 1.5px, transparent 1.5px)`,
+        backgroundSize: '40px 40px',
+      };
+      case 'diagonal': return {
+        opacity: 0.06,
+        backgroundImage: `repeating-linear-gradient(45deg, ${theme.primary} 0, ${theme.primary} 1px, transparent 0, transparent 50%)`,
+        backgroundSize: '30px 30px',
+      };
+      case 'circuit': return {
+        opacity: 0.07,
+        backgroundImage: [
+          `linear-gradient(${theme.primary} 1px, transparent 1px)`,
+          `linear-gradient(90deg, ${theme.primary} 1px, transparent 1px)`,
+          `radial-gradient(${theme.accent}60 1.5px, transparent 1.5px)`,
+        ].join(', '),
+        backgroundSize: '80px 80px, 80px 80px, 80px 80px',
+        backgroundPosition: '0 0, 0 0, 40px 40px',
+      };
+      case 'grid':
+      default: return {
+        opacity: 0.08,
+        backgroundImage: `linear-gradient(${theme.primary} 1px, transparent 1px), linear-gradient(90deg, ${theme.primary} 1px, transparent 1px)`,
+        backgroundSize: '120px 120px',
+      };
+    }
+  };
+
   return (
     <AbsoluteFill style={{ 
       background: `radial-gradient(circle at 10% 20%, ${theme.primary}12 0%, transparent 50%), radial-gradient(circle at 90% 80%, ${theme.secondary}12 0%, transparent 50%), radial-gradient(circle at 50% 10%, ${theme.accent}08 0%, transparent 40%), ${theme.background}`,
       overflow: "hidden" 
     }}>
-      {/* Subtle scientific grid lines */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        opacity: 0.08,
-        backgroundImage: `linear-gradient(${theme.primary} 1px, transparent 1px), linear-gradient(90deg, ${theme.primary} 1px, transparent 1px)`,
-        backgroundSize: '120px 120px',
-      }} />
+      {/* Background pattern layer */}
+      {pattern !== 'none' && (
+        <div style={{ position: 'absolute', inset: 0, ...getPatternStyle() }} />
+      )}
 
-      {/* Decorative corners for design aesthetics */}
-      {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map(pos => {
+      {/* Decorative corner brackets */}
+      {showCorners && ['top-left', 'top-right', 'bottom-left', 'bottom-right'].map(pos => {
         const isTop = pos.includes('top');
         const isLeft = pos.includes('left');
         return (
@@ -340,28 +471,142 @@ const BrandingOverlay: React.FC<{ branding: VideoProps['branding']; theme: Theme
 // Dynamic progress bar component
 const ProgressBar: React.FC<{
   show: boolean;
+  type?: 'line' | 'border' | 'radial';
   position: 'top' | 'bottom';
   color?: string;
   height?: number;
+  thickness?: number;
+  glow?: boolean;
   theme: Theme;
   currentFrame: number;
   totalDuration: number;
-}> = ({ show, position, color, height = 8, theme, currentFrame, totalDuration }) => {
+}> = ({ 
+  show, 
+  type = 'line', 
+  position, 
+  color, 
+  height = 8, 
+  thickness = 8, 
+  glow = true, 
+  theme, 
+  currentFrame, 
+  totalDuration 
+}) => {
   if (!show) return null;
-  const progress = currentFrame / totalDuration;
+  const { width, height: videoHeight } = useVideoConfig();
+  const progress = Math.min(1, Math.max(0, currentFrame / totalDuration));
   const barColor = color || theme.primary;
 
+  // 1. BORDER LOADER TYPE
+  if (type === 'border') {
+    const borderThickness = thickness || height;
+    const perimeter = 2 * (width + videoHeight);
+    const strokeDasharray = perimeter;
+    const strokeDashoffset = perimeter * (1 - progress);
+
+    return (
+      <svg 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 1000,
+        }}
+        viewBox={`0 0 ${width} ${videoHeight}`}
+      >
+        <rect
+          x={borderThickness / 2}
+          y={borderThickness / 2}
+          width={width - borderThickness}
+          height={videoHeight - borderThickness}
+          fill="none"
+          stroke={barColor}
+          strokeWidth={borderThickness}
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          style={glow ? {
+            filter: `drop-shadow(0 0 ${borderThickness}px ${barColor})`,
+          } : undefined}
+        />
+      </svg>
+    );
+  }
+
+  // 2. RADIAL CORNER LOADER TYPE
+  if (type === 'radial') {
+    const radius = 60;
+    const strokeWidth = thickness || height;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference * (1 - progress);
+
+    return (
+      <div style={{
+        position: 'absolute',
+        top: 30,
+        right: 30,
+        zIndex: 1000,
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <svg width={radius * 2 + strokeWidth * 2} height={radius * 2 + strokeWidth * 2} style={{ transform: 'rotate(-90deg)' }}>
+          <circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.1)"
+            strokeWidth={strokeWidth}
+          />
+          <circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius}
+            fill="none"
+            stroke={barColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            style={glow ? {
+              filter: `drop-shadow(0 0 ${strokeWidth}px ${barColor})`,
+            } : undefined}
+          />
+        </svg>
+        <div style={{
+          position: 'absolute',
+          color: theme.text,
+          fontSize: '20px',
+          fontWeight: '900',
+          fontFamily: 'sans-serif',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+        }}>
+          {Math.round(progress * 100)}%
+        </div>
+      </div>
+    );
+  }
+
+  // 3. CLASSICAL LINE TYPE (Default)
   const styles: React.CSSProperties = {
     position: 'absolute',
     left: 0,
     right: 0,
     height,
     background: barColor,
-    boxShadow: `0 0 12px ${barColor}`,
     transform: `scaleX(${progress})`,
     transformOrigin: 'left',
     zIndex: 600,
   };
+
+  if (glow) {
+    styles.boxShadow = `0 0 12px ${barColor}`;
+  }
 
   if (position === 'top') {
     styles.top = 0;
@@ -372,7 +617,347 @@ const ProgressBar: React.FC<{
   return <div style={styles} />;
 };
 
-const hasMarkdown = (text: string) => /~~|\*|_|`/.test(text);
+const ScreenBorder: React.FC<{
+  show: boolean;
+  color?: string;
+  width?: number;
+  radius?: number;
+  glow?: boolean;
+  theme: Theme;
+}> = ({ show, color, width = 12, radius = 24, glow = true, theme }) => {
+  if (!show) return null;
+  const borderColor = color || theme.border;
+
+  return (
+    <AbsoluteFill 
+      style={{
+        pointerEvents: 'none',
+        zIndex: 550,
+        boxSizing: 'border-box',
+        border: `${width}px solid ${borderColor}`,
+        borderRadius: radius,
+        boxShadow: glow ? `inset 0 0 20px ${borderColor}40, 0 0 20px ${borderColor}40` : undefined,
+      }}
+    />
+  );
+};
+
+const hasMarkdown = (text: string) => /~~|\*|_|`|\$/.test(text);
+
+// Slide Counter Overlay Component
+const SlideCounter: React.FC<{
+  current: number;
+  total: number;
+  style?: 'minimal' | 'pill' | 'fraction' | 'dots';
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
+  color?: string;
+  theme: Theme;
+}> = ({ current, total, style = 'pill', position = 'bottom-right', color, theme }) => {
+  const c = color || theme.primary;
+
+  const posStyle: React.CSSProperties = { position: 'absolute', zIndex: 480, pointerEvents: 'none' };
+  if (position.includes('top')) posStyle.top = 48;
+  else posStyle.bottom = 48;
+  if (position.includes('left')) posStyle.left = 60;
+  else if (position.includes('right')) posStyle.right = 60;
+  else { posStyle.left = '50%'; posStyle.transform = 'translateX(-50%)'; }
+
+  if (style === 'dots') {
+    return (
+      <div style={{ ...posStyle, display: 'flex', gap: 8, alignItems: 'center' }}>
+        {Array.from({ length: total }).map((_, i) => (
+          <div key={i} style={{
+            width: i === current - 1 ? 20 : 8,
+            height: 8,
+            borderRadius: 4,
+            background: i === current - 1 ? c : `${c}40`,
+            transition: 'width 0.3s ease',
+            boxShadow: i === current - 1 ? `0 0 8px ${c}` : undefined,
+          }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (style === 'minimal') {
+    return (
+      <div style={{ ...posStyle, fontFamily: 'monospace', fontSize: 18, fontWeight: 700, color: c, letterSpacing: 2, opacity: 0.8 }}>
+        {String(current).padStart(2, '0')} / {String(total).padStart(2, '0')}
+      </div>
+    );
+  }
+
+  if (style === 'fraction') {
+    return (
+      <div style={{ ...posStyle, display: 'flex', alignItems: 'center', gap: 4, background: theme.cardBg, backdropFilter: 'blur(12px)', borderRadius: 12, padding: '8px 16px', border: `1.5px solid ${c}40` }}>
+        <span style={{ fontSize: 22, fontWeight: 900, color: c }}>{current}</span>
+        <span style={{ fontSize: 16, color: theme.secondary, margin: '0 2px' }}>/</span>
+        <span style={{ fontSize: 16, color: theme.secondary }}>{total}</span>
+      </div>
+    );
+  }
+
+  // Default: 'pill'
+  return (
+    <div style={{
+      ...posStyle,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      background: theme.cardBg,
+      backdropFilter: 'blur(16px)',
+      border: `1.5px solid ${c}50`,
+      borderRadius: 40,
+      padding: '8px 20px',
+      boxShadow: `0 4px 20px rgba(0,0,0,0.3)`,
+    }}>
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: c, boxShadow: `0 0 6px ${c}` }} />
+      <span style={{ fontSize: 16, fontWeight: 700, color: theme.text, letterSpacing: 1 }}>
+        Slide {current} of {total}
+      </span>
+    </div>
+  );
+};
+
+// Watermark image overlay — persistent semi-transparent PNG stamped over every frame
+const WatermarkOverlay: React.FC<{
+  path: string;
+  opacity?: number;
+  size?: number;
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
+}> = ({ path, opacity = 0.12, size = 200, position = 'bottom-right' }) => {
+  const posStyle: React.CSSProperties = { position: 'absolute', zIndex: 490, pointerEvents: 'none' };
+  if (position === 'center') {
+    posStyle.top = '50%'; posStyle.left = '50%'; posStyle.transform = 'translate(-50%, -50%)';
+  } else {
+    if (position.includes('top')) posStyle.top = 40; else posStyle.bottom = 40;
+    if (position.includes('left')) posStyle.left = 40; else posStyle.right = 40;
+  }
+  return (
+    <Img
+      src={staticFile(path)}
+      style={{ ...posStyle, width: size, height: size, objectFit: 'contain', opacity }}
+    />
+  );
+};
+
+// Countdown Slide Layout — animated large number countdown
+const CountdownLayout: React.FC<{
+  from?: number;
+  heading?: string;
+  theme: Theme;
+  fontFamily: string;
+  disableAnimations?: boolean;
+}> = ({ from = 5, heading, theme, fontFamily, disableAnimations }) => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  const totalSecs = durationInFrames / fps;
+  const elapsed = frame / fps;
+  const remaining = Math.max(0, Math.ceil(from - (elapsed / totalSecs) * from));
+  const progress = elapsed / totalSecs;
+
+  // Pulse beat per second
+  const beatFrame = frame % fps;
+  const pulse = disableAnimations ? 1 : interpolate(beatFrame, [0, fps * 0.15, fps * 0.3], [0.9, 1.08, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+
+  // Circle stroke progress
+  const circumference = 2 * Math.PI * 200;
+  const strokeDash = circumference * (1 - progress);
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '100%', width: '100%', gap: 30,
+    }}>
+      {heading && (
+        <h2 style={{ fontFamily, fontSize: 42, fontWeight: 800, color: theme.primary, margin: 0, letterSpacing: -1 }}>
+          {heading}
+        </h2>
+      )}
+      <div style={{ position: 'relative', width: 480, height: 480 }}>
+        {/* Background circle */}
+        <svg width="480" height="480" style={{ position: 'absolute', top: 0, left: 0 }}>
+          <circle cx="240" cy="240" r="200" fill="none" stroke={`${theme.primary}18`} strokeWidth="12" />
+          <circle
+            cx="240" cy="240" r="200"
+            fill="none"
+            stroke={theme.primary}
+            strokeWidth="12"
+            strokeLinecap="round"
+            strokeDasharray={`${circumference}`}
+            strokeDashoffset={`${circumference - strokeDash}`}
+            style={{ filter: `drop-shadow(0 0 12px ${theme.primary})`, transformOrigin: '240px 240px', transform: 'rotate(-90deg)' }}
+          />
+        </svg>
+        {/* Number */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily, fontWeight: 900, fontSize: 180,
+          color: theme.primary,
+          textShadow: `0 0 60px ${theme.primary}60`,
+          transform: `scale(${pulse})`,
+          letterSpacing: -8,
+        }}>
+          {remaining}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Syntax colors for code block (dark-theme aware)
+const CODE_COLORS = {
+  keyword: '#ff79c6',
+  string: '#f1fa8c',
+  comment: '#6272a4',
+  number: '#bd93f9',
+  function: '#50fa7b',
+  operator: '#ff79c6',
+  default: '#f8f8f2',
+};
+
+// Lightweight CSS-only syntax highlighter
+function highlightCode(code: string, _language?: string): React.ReactNode[] {
+  const lines = code.split('\n');
+  return lines.map((line, li) => {
+    // Tokenize with regex
+    const tokens: React.ReactNode[] = [];
+    const patterns: Array<{ re: RegExp; color: string }> = [
+      { re: /(\/\/.*$)/g,                                             color: CODE_COLORS.comment },
+      { re: /(#.*$)/g,                                                color: CODE_COLORS.comment },
+      { re: /\b(const|let|var|function|return|import|from|export|default|class|extends|if|else|for|while|do|switch|case|break|continue|new|this|typeof|instanceof|async|await|try|catch|finally|def|print|in|not|and|or|pass|None|True|False|lambda|yield|with|as|del|global|nonlocal|raise|assert|elif|import|from|is)\b/g, color: CODE_COLORS.keyword },
+      { re: /(["'`])(.*?)\1/g,                                        color: CODE_COLORS.string },
+      { re: /\b(\d+\.?\d*)\b/g,                                      color: CODE_COLORS.number },
+      { re: /([a-zA-Z_$][\w$]*)(?=\s*\()/g,                         color: CODE_COLORS.function },
+    ];
+
+    // We'll just render the raw line with a simple regex pass
+    // Split into segments by running all patterns against cleaned line
+    let remaining = line;
+    let key = 0;
+    const lineNodes: React.ReactNode[] = [];
+
+    // Single-pass: find earliest match
+    while (remaining.length > 0) {
+      let earliest: { index: number; len: number; color: string; text: string } | null = null;
+      for (const { re, color } of patterns) {
+        re.lastIndex = 0;
+        const m = re.exec(remaining);
+        if (m && (earliest === null || m.index < earliest.index)) {
+          earliest = { index: m.index, len: m[0].length, color, text: m[0] };
+        }
+      }
+      if (!earliest || earliest.index > 0) {
+        const plain = earliest ? remaining.slice(0, earliest.index) : remaining;
+        lineNodes.push(<span key={key++} style={{ color: CODE_COLORS.default }}>{plain}</span>);
+        remaining = earliest ? remaining.slice(earliest.index) : '';
+      } else {
+        lineNodes.push(<span key={key++} style={{ color: earliest.color, fontWeight: 600 }}>{earliest.text}</span>);
+        remaining = remaining.slice(earliest.len);
+      }
+    }
+
+    return (
+      <div key={li} style={{ display: 'flex', minHeight: '1.4em' }}>
+        {lineNodes.length ? lineNodes : <span>&#8203;</span>}
+      </div>
+    );
+  });
+}
+
+// Code Block Slide Layout
+const CodeBlockLayout: React.FC<{
+  heading?: string;
+  subheading?: string;
+  code: string;
+  language?: string;
+  showLineNumbers?: boolean;
+  theme: Theme;
+  fontFamily: string;
+  entrance: number;
+}> = ({ heading, subheading, code, language, showLineNumbers = true, theme, fontFamily, entrance }) => {
+  const lines = code.split('\n');
+  const translateY = interpolate(entrance, [0, 1], [30, 0]);
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: 24,
+      transform: `translateY(${translateY}px)`, opacity: entrance,
+    }}>
+      {/* Header */}
+      {(heading || language) && (
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          {heading && (
+            <h2 style={{
+              fontFamily, fontSize: 46, fontWeight: 800, color: theme.primary,
+              margin: 0, lineHeight: 1.1, letterSpacing: -1,
+            }}>{heading}</h2>
+          )}
+          {language && (
+            <span style={{
+              fontFamily: 'monospace', fontSize: 16, fontWeight: 700,
+              color: theme.accent, background: `${theme.accent}18`,
+              border: `1.5px solid ${theme.accent}40`,
+              padding: '4px 14px', borderRadius: 20, letterSpacing: 1, textTransform: 'uppercase',
+            }}>{language}</span>
+          )}
+        </div>
+      )}
+      {subheading && (
+        <p style={{ fontFamily, fontSize: 24, color: theme.secondary, margin: 0, fontWeight: 500 }}>{subheading}</p>
+      )}
+
+      {/* Code panel */}
+      <div style={{
+        flex: 1,
+        background: 'rgba(10,10,18,0.85)',
+        border: `2px solid ${theme.primary}30`,
+        borderRadius: 20,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: `0 20px 50px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.3)`,
+      }}>
+        {/* Traffic-light title bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '12px 20px',
+          background: 'rgba(255,255,255,0.04)',
+          borderBottom: `1.5px solid ${theme.border}`,
+        }}>
+          {['#ff5f57','#ffbd2e','#28c840'].map((c, i) => (
+            <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: c }} />
+          ))}
+          {language && (
+            <span style={{ marginLeft: 14, fontFamily: 'monospace', fontSize: 14, color: CODE_COLORS.comment }}>
+              {language === 'javascript' || language === 'js' ? 'script.js'
+                : language === 'python' || language === 'py' ? 'script.py'
+                : language === 'bash' || language === 'sh' ? 'terminal.sh'
+                : language === 'typescript' || language === 'ts' ? 'script.ts'
+                : `code.${language}`}
+            </span>
+          )}
+        </div>
+
+        {/* Code content */}
+        <div style={{ padding: '20px 24px', overflow: 'hidden', flex: 1, fontFamily: 'monospace', fontSize: 22, lineHeight: 1.65 }}>
+          {lines.map((_, li) => (
+            <div key={li} style={{ display: 'flex', gap: 20 }}>
+              {showLineNumbers && (
+                <span style={{ color: CODE_COLORS.comment, minWidth: 32, textAlign: 'right', userSelect: 'none', opacity: 0.6, fontSize: 18 }}>
+                  {li + 1}
+                </span>
+              )}
+              <div style={{ flex: 1 }}>{highlightCode(lines[li])}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const MarkdownText: React.FC<{
   text: string;
@@ -381,6 +966,8 @@ const MarkdownText: React.FC<{
 }> = ({ text, theme, primaryColor }) => {
   return (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm, remarkMath]}
+      rehypePlugins={[rehypeKatex]}
       components={{
         strong: ({node, ...props}) => <span style={{color: primaryColor || theme.primary, fontWeight: 900}} {...props} />,
         em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
@@ -1066,9 +1653,13 @@ const TitleSlide: React.FC<{ titlePage: VideoProps['titlePage']; theme: Theme; f
 };
 
 // Dynamic Media Component with startFrom support
+const isGif = (path: string) => path.toLowerCase().endsWith('.gif');
+
 const MediaRenderer: React.FC<{ path: string; type: 'image' | 'video'; startFromInSeconds?: number; style?: React.CSSProperties }> = ({ path, type, startFromInSeconds = 0, style }) => {
   const { fps } = useVideoConfig();
   const startFromFrames = Math.round(startFromInSeconds * fps);
+  // GIFs must use <Video> in Chromium — <Img> renders only the first frame
+  const effectiveType: 'image' | 'video' = isGif(path) ? 'video' : type;
 
   return (
     <div style={{
@@ -1081,44 +1672,20 @@ const MediaRenderer: React.FC<{ path: string; type: 'image' | 'video'; startFrom
       border: '1.5px solid rgba(255, 255, 255, 0.1)',
       ...style
     }}>
-      {/* Blurred background */}
-      <div style={{
-        position: 'absolute',
-        inset: -10,
-        filter: 'blur(30px) brightness(0.4)',
-        zIndex: 1,
-      }}>
-        {type === 'image' ? (
+      {/* Blurred background fill */}
+      <div style={{ position: 'absolute', inset: -10, filter: 'blur(30px) brightness(0.4)', zIndex: 1 }}>
+        {effectiveType === 'image' ? (
           <Img src={staticFile(path)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <RemotionVideo 
-            src={staticFile(path)} 
-            volume={0} 
-            startFrom={startFromFrames}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-          />
+          <RemotionVideo src={staticFile(path)} volume={0} startFrom={startFromFrames} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
       </div>
-      
       {/* Crisp foreground */}
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        zIndex: 2,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
-        {type === 'image' ? (
+      <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {effectiveType === 'image' ? (
           <Img src={staticFile(path)} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         ) : (
-          <RemotionVideo 
-            src={staticFile(path)} 
-            volume={0} 
-            startFrom={startFromFrames}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-          />
+          <RemotionVideo src={staticFile(path)} volume={0} startFrom={startFromFrames} loop style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         )}
       </div>
     </div>
@@ -1132,23 +1699,38 @@ const KaraokeText: React.FC<{
   theme: Theme;
   fontFamily: string;
   fontWeight: string;
-}> = ({ lines, currentFrame, fps, theme, fontFamily, fontWeight }) => {
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  fontSize?: number;
+}> = ({ lines, currentFrame, fps, theme, fontFamily, fontWeight, textAlign, fontSize }) => {
   const currentTime = currentFrame / fps;
   const { width, height } = useVideoConfig();
   const isPortrait = width < height;
   
   // Calculate total number of characters to decide font size
   const totalChars = lines.reduce((acc, line) => acc + line.reduce((lAcc, word) => lAcc + word.text.length, 0), 0);
-  const fontSize = isPortrait
+  const calculatedFontSize = fontSize || (isPortrait
     ? (totalChars > 250 ? 38 : totalChars > 150 ? 46 : 54)
-    : (totalChars > 250 ? 28 : totalChars > 150 ? 34 : 40);
+    : (totalChars > 250 ? 28 : totalChars > 150 ? 34 : 40));
+
+  let flexAlign: 'flex-start' | 'center' | 'flex-end' | 'stretch' = 'flex-start';
+  let flexJustify: 'flex-start' | 'center' | 'flex-end' | 'space-between' = 'flex-start';
+  if (textAlign === 'center') {
+    flexAlign = 'center';
+    flexJustify = 'center';
+  } else if (textAlign === 'right') {
+    flexAlign = 'flex-end';
+    flexJustify = 'flex-end';
+  } else if (textAlign === 'justify') {
+    flexAlign = 'stretch';
+    flexJustify = 'space-between';
+  }
 
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       gap: '20px',
-      alignItems: 'flex-start',
+      alignItems: flexAlign,
       width: '100%',
       justifyContent: 'center',
     }}>
@@ -1158,8 +1740,9 @@ const KaraokeText: React.FC<{
           flexWrap: 'wrap',
           lineHeight: '1.4',
           fontFamily,
-          fontSize,
+          fontSize: calculatedFontSize,
           fontWeight: fontWeight || 'bold',
+          justifyContent: flexJustify,
         }}>
           {line.map((word, wordIdx) => {
             const isActive = currentTime >= word.relStart && currentTime <= word.relEnd;
@@ -1202,17 +1785,348 @@ const KaraokeText: React.FC<{
   );
 };
 
+// SVG Chart Renderer Component (Pure SVG - Zero dependencies, fits any resolution)
+const SvgChart: React.FC<{
+  chart: NonNullable<SlideData['chart']>;
+  theme: Theme;
+  fontFamily: string;
+}> = ({ chart, theme, fontFamily }) => {
+  const { type, data, color } = chart;
+  const chartColor = color || theme.primary;
+  const accentColor = theme.accent;
+  const textColor = theme.text;
+  const secondaryColor = theme.secondary;
+
+  const width = 600;
+  const height = 360;
+  const padding = 50;
+
+  if (!data || data.length === 0) return null;
+
+  // 1. BAR CHART
+  if (type === 'bar') {
+    const maxVal = Math.max(...data.map(d => d.value), 1);
+    const graphWidth = width - 2 * padding;
+    const graphHeight = height - 2 * padding;
+    const barWidth = (graphWidth / data.length) * 0.6;
+    const gap = (graphWidth / data.length) * 0.4;
+
+    return (
+      <svg width={width} height={height} style={{ overflow: 'visible', fontFamily }}>
+        {/* Background Grid Lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+          const y = padding + graphHeight * (1 - ratio);
+          return (
+            <g key={i}>
+              <line
+                x1={padding}
+                y1={y}
+                x2={width - padding}
+                y2={y}
+                stroke={theme.border}
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+              <text
+                x={padding - 10}
+                y={y + 4}
+                fill={secondaryColor}
+                fontSize={12}
+                textAnchor="end"
+              >
+                {Math.round(maxVal * ratio)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Bars and Labels */}
+        {data.map((item, idx) => {
+          const x = padding + idx * (barWidth + gap) + gap / 2;
+          const barHeight = (item.value / maxVal) * graphHeight;
+          const y = padding + graphHeight - barHeight;
+
+          return (
+            <g key={idx}>
+              {/* Glowing animated bar */}
+              <rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={barHeight}
+                fill={`url(#barGrad-${idx})`}
+                rx={6}
+                style={{
+                  filter: `drop-shadow(0 4px 8px ${chartColor}30)`,
+                }}
+              />
+              <defs>
+                <linearGradient id={`barGrad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={chartColor} />
+                  <stop offset="100%" stopColor={`${chartColor}40`} />
+                </linearGradient>
+              </defs>
+
+              {/* Value on top of bar */}
+              <text
+                x={x + barWidth / 2}
+                y={y - 8}
+                fill={textColor}
+                fontSize={14}
+                fontWeight={800}
+                textAnchor="middle"
+              >
+                {item.value}
+              </text>
+
+              {/* Label at bottom */}
+              <text
+                x={x + barWidth / 2}
+                y={padding + graphHeight + 20}
+                fill={textColor}
+                fontSize={13}
+                fontWeight={600}
+                textAnchor="middle"
+              >
+                {item.label}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Axis line */}
+        <line
+          x1={padding}
+          y1={padding + graphHeight}
+          x2={width - padding}
+          y2={padding + graphHeight}
+          stroke={chartColor}
+          strokeWidth={2}
+        />
+      </svg>
+    );
+  }
+
+  // 2. LINE CHART
+  if (type === 'line') {
+    const maxVal = Math.max(...data.map(d => d.value), 1);
+    const graphWidth = width - 2 * padding;
+    const graphHeight = height - 2 * padding;
+    const stepX = graphWidth / (data.length - 1 || 1);
+
+    const points = data.map((d, idx) => ({
+      x: padding + idx * stepX,
+      y: padding + graphHeight - (d.value / maxVal) * graphHeight
+    }));
+
+    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding + graphHeight} L ${points[0].x} ${padding + graphHeight} Z`;
+
+    return (
+      <svg width={width} height={height} style={{ overflow: 'visible', fontFamily }}>
+        {/* Grids */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+          const y = padding + graphHeight * (1 - ratio);
+          return (
+            <g key={i}>
+              <line
+                x1={padding}
+                y1={y}
+                x2={width - padding}
+                y2={y}
+                stroke={theme.border}
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+              <text
+                x={padding - 10}
+                y={y + 4}
+                fill={secondaryColor}
+                fontSize={12}
+                textAnchor="end"
+              >
+                {Math.round(maxVal * ratio)}
+              </text>
+            </g>
+          );
+        })}
+
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={chartColor} stopOpacity={0.4} />
+            <stop offset="100%" stopColor={chartColor} stopOpacity={0.0} />
+          </linearGradient>
+        </defs>
+
+        {/* Filled Area */}
+        <path d={areaPath} fill="url(#areaGrad)" />
+
+        {/* Line Path */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={chartColor}
+          strokeWidth={4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            filter: `drop-shadow(0 4px 8px ${chartColor}40)`,
+          }}
+        />
+
+        {/* Dots, Values and Labels */}
+        {points.map((p, idx) => (
+          <g key={idx}>
+            <circle
+              cx={p.x}
+              cy={p.y}
+              r={6}
+              fill={theme.background}
+              stroke={accentColor}
+              strokeWidth={3}
+            />
+            <text
+              x={p.x}
+              y={p.y - 12}
+              fill={textColor}
+              fontSize={14}
+              fontWeight={800}
+              textAnchor="middle"
+            >
+              {data[idx].value}
+            </text>
+            <text
+              x={p.x}
+              y={padding + graphHeight + 20}
+              fill={textColor}
+              fontSize={13}
+              fontWeight={600}
+              textAnchor="middle"
+            >
+              {data[idx].label}
+            </text>
+          </g>
+        ))}
+      </svg>
+    );
+  }
+
+  // 3. PIE / DONUT CHART
+  if (type === 'pie' || type === 'donut') {
+    const total = data.reduce((sum, d) => sum + d.value, 0);
+    const radius = 90;
+    const innerRadius = type === 'donut' ? 55 : 0;
+    const centerX = width / 2 - 80;
+    const centerY = height / 2;
+
+    let accumulatedAngle = 0;
+
+    const colors = [
+      chartColor,
+      accentColor,
+      secondaryColor,
+      '#EF4444',
+      '#10B981',
+      '#3B82F6',
+      '#F59E0B'
+    ];
+
+    const wedges = data.map((item, idx) => {
+      const percentage = total > 0 ? item.value / total : 0;
+      const angle = percentage * 360;
+
+      const startAngle = accumulatedAngle;
+      const endAngle = accumulatedAngle + angle;
+      accumulatedAngle += angle;
+
+      const rad = Math.PI / 180;
+      const x1 = centerX + radius * Math.cos(startAngle * rad);
+      const y1 = centerY + radius * Math.sin(startAngle * rad);
+      const x2 = centerX + radius * Math.cos(endAngle * rad);
+      const y2 = centerY + radius * Math.sin(endAngle * rad);
+
+      const ix1 = centerX + innerRadius * Math.cos(startAngle * rad);
+      const iy1 = centerY + innerRadius * Math.sin(startAngle * rad);
+      const ix2 = centerX + innerRadius * Math.cos(endAngle * rad);
+      const iy2 = centerY + innerRadius * Math.sin(endAngle * rad);
+
+      const largeArcFlag = angle > 180 ? 1 : 0;
+
+      let d = '';
+      if (innerRadius > 0) {
+        d = `M ${ix1} ${iy1} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${ix1} ${iy1} Z`;
+      } else {
+        d = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+      }
+
+      const color = colors[idx % colors.length];
+
+      return {
+        d,
+        color,
+        item,
+        percentage: Math.round(percentage * 100)
+      };
+    });
+
+    return (
+      <svg width={width} height={height} style={{ overflow: 'visible', fontFamily }}>
+        {wedges.map((w, idx) => (
+          <path
+            key={idx}
+            d={w.d}
+            fill={w.color}
+            stroke={theme.background}
+            strokeWidth={2}
+            style={{
+              filter: `drop-shadow(0 4px 6px rgba(0,0,0,0.15))`,
+            }}
+          />
+        ))}
+
+        {/* Legend */}
+        <g transform={`translate(${centerX + radius + 40}, ${centerY - (data.length * 24) / 2})`}>
+          {wedges.map((w, idx) => (
+            <g key={idx} transform={`translate(0, ${idx * 24})`}>
+              <rect width={16} height={16} rx={4} fill={w.color} />
+              <text
+                x={26}
+                y={13}
+                fill={textColor}
+                fontSize={13}
+                fontWeight={600}
+              >
+                {w.item.label} ({w.percentage}%)
+              </text>
+            </g>
+          ))}
+        </g>
+      </svg>
+    );
+  }
+
+  return null;
+};
+
 // Content Slide Component with Responsive Aspect-Ratio Support and Custom Transitions
-const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: number; theme: Theme; fontFamily: string; fontWeight: string; disableAnimations?: boolean }> = ({ slide, index, totalSlides, theme, fontFamily, fontWeight, disableAnimations }) => {
+const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: number; theme: Theme; fontFamily: string; fontWeight: string; disableAnimations?: boolean }> = ({ slide, index, totalSlides, theme: globalTheme, fontFamily, fontWeight, disableAnimations }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames, width, height } = useVideoConfig();
   const isPortrait = width < height; // Check aspect ratio
+
+  // ── Per-slide theme override ──────────────────────────────────────────────
+  const slideThemeBase = slide.themeName ? (THEMES[slide.themeName] ?? globalTheme) : globalTheme;
+  const theme: Theme = {
+    ...slideThemeBase,
+    ...(slide.theme ?? {}),
+    ...(slide.accentColor ? { primary: slide.accentColor, border: `${slide.accentColor}40` } : {}),
+  };
 
   const entrance = disableAnimations
     ? 1
     : spring({ frame, fps, config: { damping: 13, stiffness: 120 } });
   
-  const exitFrames = 15;
+  const exitFrames = Math.round((slide.transitionDurationInSeconds ?? 0.5) * fps);
   const exitStart = durationInFrames - exitFrames;
 
   const textTranslateY = interpolate(entrance, [0, 1], [40, 0]);
@@ -1229,7 +2143,7 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        textAlign: 'left',
+        textAlign: slide.textAlign || 'left',
         transform: `translateY(${textTranslateY}px)`,
         paddingRight: isPortrait ? 0 : 20,
         zIndex: 10,
@@ -1237,15 +2151,20 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
         {slide.heading && (
           <h2 style={{
             fontFamily,
-            fontSize: isPortrait ? 48 : 56,
-            fontWeight: 800,
+            fontSize: slide.headingFontSize || (isPortrait ? 48 : 56),
+            fontWeight: (slide.headingFontWeight as any) || 800,
             color: theme.primary,
             margin: '0 0 16px 0',
             lineHeight: 1.1,
             letterSpacing: -1,
-            textShadow: `0 4px 12px ${theme.primary}25`,
+            textShadow: slide.textShadow || `0 4px 12px ${theme.primary}25`,
+            WebkitTextStroke: slide.textStroke || 'none',
+            ...(slide.textAnimation === 'pop-in' ? { opacity: entrance, transform: `scale(${0.8 + entrance * 0.2})` } : {}),
+            ...(slide.textAnimation === 'reveal' ? { clipPath: `inset(0 ${(1 - entrance) * 100}% 0 0)` } : {}),
+            ...(slide.textAnimation === 'stagger' ? { opacity: entrance, transform: `translateY(${(1 - entrance) * 30}px)` } : {}),
           }}>
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
                 strong: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900}} {...props} />,
                 em: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
@@ -1279,15 +2198,21 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
         {slide.subheading && (
           <h3 style={{
             fontFamily,
-            fontSize: isPortrait ? 28 : 32,
-            fontWeight: 700,
+            fontSize: slide.subheadingFontSize || (isPortrait ? 28 : 32),
+            fontWeight: (slide.subheadingFontWeight as any) || 700,
             color: theme.secondary,
             margin: '-12px 0 24px 0',
             lineHeight: 1.2,
             letterSpacing: -0.5,
             opacity: 0.9,
+            textShadow: slide.textShadow || 'none',
+            WebkitTextStroke: slide.textStroke || 'none',
+            ...(slide.textAnimation === 'pop-in' ? { opacity: entrance, transform: `scale(${0.8 + entrance * 0.2})` } : {}),
+            ...(slide.textAnimation === 'reveal' ? { clipPath: `inset(0 ${(1 - entrance) * 100}% 0 0)` } : {}),
+            ...(slide.textAnimation === 'stagger' ? { opacity: entrance, transform: `translateY(${(1 - entrance) * 30}px)` } : {}),
           }}>
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
                 strong: ({node, ...props}) => <span style={{color: theme.primary, fontWeight: 900}} {...props} />,
                 em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
@@ -1325,18 +2250,23 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
             fps={fps}
             theme={theme}
             fontFamily={fontFamily}
-            fontWeight={fontWeight}
+            fontWeight={slide.fontWeight || fontWeight}
+            textAlign={slide.textAlign}
+            fontSize={slide.fontSize}
           />
         ) : slide.content && (
           <div style={{
             fontFamily,
-            fontSize: isPortrait ? contentFontSize * 0.85 : contentFontSize,
+            fontSize: slide.fontSize || (isPortrait ? contentFontSize * 0.85 : contentFontSize),
             color: theme.text,
             lineHeight: 1.5,
-            fontWeight: (fontWeight as any) || 600,
-            opacity: 0.95
+            fontWeight: (slide.fontWeight as any) || (fontWeight as any) || 600,
+            opacity: 0.95,
+            textShadow: slide.textShadow || 'none',
+            WebkitTextStroke: slide.textStroke || 'none',
           }}>
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
                 strong: ({node, ...props}) => <span style={{color: theme.secondary, fontWeight: 900}} {...props} />,
                 em: ({node, ...props}) => <span style={{color: theme.accent, fontWeight: 900, fontStyle: 'normal'}} {...props} />,
@@ -1364,6 +2294,49 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
                 ul: ({node, ...props}) => <ul style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'square' }} {...props} />,
                 ol: ({node, ...props}) => <ol style={{ margin: '0 0 20px 0', paddingLeft: 30, listStyleType: 'decimal' }} {...props} />,
                 li: ({node, ...props}) => <li style={{marginBottom: 10}} {...props} />,
+                table: ({node, ...props}) => (
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    margin: '20px 0',
+                    fontSize: '0.9em',
+                    fontFamily,
+                    background: theme.cardBg,
+                    border: `1.5px solid ${theme.border}`,
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.25)',
+                  }} {...props} />
+                ),
+                thead: ({node, ...props}) => (
+                  <thead style={{
+                    background: `linear-gradient(120deg, ${theme.primary}20, ${theme.primary}10)`,
+                    borderBottom: `2.5px solid ${theme.primary}`,
+                  }} {...props} />
+                ),
+                tbody: ({node, ...props}) => <tbody {...props} />,
+                tr: ({node, ...props}) => (
+                  <tr style={{
+                    borderBottom: `1px solid ${theme.border}`,
+                    transition: 'background 0.2s ease',
+                  }} {...props} />
+                ),
+                th: ({node, ...props}) => (
+                  <th style={{
+                    padding: '12px 16px',
+                    fontWeight: 800,
+                    textAlign: 'left',
+                    color: theme.primary,
+                    letterSpacing: '-0.5px',
+                  }} {...props} />
+                ),
+                td: ({node, ...props}) => (
+                  <td style={{
+                    padding: '12px 16px',
+                    color: theme.text,
+                    opacity: 0.95,
+                  }} {...props} />
+                ),
               }}
             >
               {slide.content.replace(/~~(.*?)~~/g, "[$1](highlight)")}
@@ -1381,6 +2354,21 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
   };
 
   const renderMedia = () => {
+    if (slide.chart) {
+      return (
+        <div style={{
+          flex: 1,
+          height: '100%',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: `scale(${mediaScale})`,
+        }}>
+          <SvgChart chart={slide.chart} theme={theme} fontFamily={fontFamily} />
+        </div>
+      );
+    }
     if (!slide.media || !slide.mediaType) return null;
     return (
       <div style={{
@@ -1471,12 +2459,20 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
           </div>
         );
       }
+      if (slide.layout === 'chart-only') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 30, height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+            {renderTextContent()}
+            {renderMedia()}
+          </div>
+        );
+      }
       if (slide.layout === 'text-only') return <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', width: '100%', textAlign: 'center', padding: 40 }}>{renderTextContent()}</div>;
       if (slide.layout === 'full-background-media') {
         return (
           <AbsoluteFill style={{ padding: 0 }}>
             {slide.media && slide.mediaType && <MediaRenderer path={slide.media} type={slide.mediaType} startFromInSeconds={slide.mediaStartFromInSeconds} style={{ borderRadius: 0, border: 'none' }} />}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,13,20,0.95) 0%, rgba(10,13,20,0.6) 50%, rgba(10,13,20,0.85) 100%)', zIndex: 3 }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,13,20,0.95) 0%, rgba(10,13,20,0.6) 50%, rgba(10,13,20,0.85) 100%)', opacity: slide.overlayOpacity ?? 1, zIndex: 3 }} />
             <div style={{ position: 'absolute', inset: 0, zIndex: 4, padding: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ background: theme.cardBg, backdropFilter: 'blur(30px)', padding: 40, borderRadius: 30, border: `2px solid ${theme.primary}`, boxShadow: '0 20px 40px rgba(0,0,0,0.5)', width: '90%', textAlign: 'center' }}>
                 {renderTextContent()}
@@ -1526,6 +2522,7 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
               position: 'absolute',
               inset: 0,
               background: 'linear-gradient(to top, rgba(10,13,20,0.95) 0%, rgba(10,13,20,0.6) 50%, rgba(10,13,20,0.85) 100%)',
+              opacity: slide.overlayOpacity ?? 1,
               zIndex: 3
             }} />
             <div style={{
@@ -1555,6 +2552,45 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
       case 'media-only':
         return (
           <div style={{ height: '100%', width: '100%' }}>
+            {renderMedia()}
+          </div>
+        );
+      case 'countdown':
+        return (
+          <CountdownLayout
+            from={slide.countdownFrom ?? 5}
+            heading={slide.heading}
+            theme={theme}
+            fontFamily={fontFamily}
+            disableAnimations={disableAnimations}
+          />
+        );
+      case 'code-block':
+        return slide.codeBlock ? (
+          <CodeBlockLayout
+            heading={slide.heading}
+            subheading={slide.subheading}
+            code={slide.codeBlock.code}
+            language={slide.codeBlock.language}
+            showLineNumbers={slide.codeBlock.showLineNumbers ?? true}
+            theme={theme}
+            fontFamily={fontFamily}
+            entrance={entranceProgress}
+          />
+        ) : null;
+      case 'chart-only':
+        return (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            width: '100%',
+            padding: '40px 100px',
+            gap: 20
+          }}>
+            {renderTextContent()}
             {renderMedia()}
           </div>
         );
@@ -1646,6 +2682,21 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
         : frame >= exitStart 
           ? interpolate(frame, [exitStart, durationInFrames - 1], [0, 25], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
           : 0;
+    } else if (transition === 'wipe-right') {
+      // Clip-path wipe: slide reveals from left edge, wipes out to right
+      const entranceClip = interpolate(entranceProgress, [0, 1], [0, 100]);
+      const exitClip = interpolate(exitProgress, [0, 1], [100, 0]);
+      // We store wipe values in unused vars, return early with special JSX below
+      combinedOpacity = 1;
+      // handled via early return after this block
+    } else if (transition === 'morph-scale') {
+      // Zooms in from oversized, exits by shrinking to dot
+      const entranceScale = interpolate(entranceProgress, [0, 1], [1.18, 1]);
+      const exitScale = interpolate(exitProgress, [0, 1], [1, 0.82]);
+      combinedScale = entranceScale * exitScale;
+    } else if (transition === 'cube-rotate') {
+      // 3D Y-axis cube rotation — handled via early return after this block
+      combinedOpacity = 1;
     } else {
       // Default 'fade' / spring transition
       const entranceTranslateX = interpolate(entranceProgress, [0, 1], [40, 0]);
@@ -1658,12 +2709,57 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
     }
   }
 
+  // ── Early-return transitions that need custom JSX wrappers ──
+  if (!disableAnimations && transition === 'wipe-right') {
+    const entranceClip = interpolate(entranceProgress, [0, 1], [0, 100]);
+    const exitClip = interpolate(exitProgress, [0, 1], [100, 0]);
+    const clipVal = Math.min(entranceClip, exitClip);
+    return (
+      <AbsoluteFill style={{ padding: isPortrait ? 40 : 75, clipPath: `inset(0 ${100 - clipVal}% 0 0)` }}>
+        <BackgroundEffects theme={theme} />
+        {slide.voiceover && <Audio src={staticFile(slide.voiceover)} volume={1.0} />}
+        {slide.bgMusic && <Audio src={staticFile(slide.bgMusic)} volume={0.6} loop />}
+        {slide.layout !== 'full-background-media' && (
+          <div style={{ width: '100%', height: '100%', background: theme.cardBg, backdropFilter: 'blur(35px)', borderRadius: isPortrait ? 36 : 48, border: `6px solid ${theme.primary}`, padding: isPortrait ? '40px 30px' : '60px 75px', boxShadow: '0 25px 50px rgba(0,0,0,0.45)', overflow: 'hidden', position: 'relative' }}>
+            {getLayout()}
+          </div>
+        )}
+        {slide.layout === 'full-background-media' && (
+          <div style={{ width: '100%', height: '100%', position: 'relative' }}>{getLayout()}</div>
+        )}
+      </AbsoluteFill>
+    );
+  }
+
+  if (!disableAnimations && transition === 'cube-rotate') {
+    const entranceRot = interpolate(entranceProgress, [0, 1], [-90, 0]);
+    const exitRot = interpolate(exitProgress, [0, 1], [0, 90]);
+    const rot = entranceRot + exitRot;
+    return (
+      <AbsoluteFill style={{ padding: isPortrait ? 40 : 75, perspective: 1600 }}>
+        <BackgroundEffects theme={theme} />
+        {slide.voiceover && <Audio src={staticFile(slide.voiceover)} volume={1.0} />}
+        {slide.bgMusic && <Audio src={staticFile(slide.bgMusic)} volume={0.6} loop />}
+        {slide.layout !== 'full-background-media' && (
+          <div style={{ width: '100%', height: '100%', background: theme.cardBg, backdropFilter: 'blur(35px)', borderRadius: isPortrait ? 36 : 48, border: `6px solid ${theme.primary}`, padding: isPortrait ? '40px 30px' : '60px 75px', boxShadow: '0 25px 50px rgba(0,0,0,0.45)', overflow: 'hidden', position: 'relative', transform: `rotateY(${rot}deg)`, opacity: combinedOpacity }}>
+            {getLayout()}
+          </div>
+        )}
+      </AbsoluteFill>
+    );
+  }
+
   return (
     <AbsoluteFill style={{ padding: isPortrait ? 40 : 75 }}>
       <BackgroundEffects theme={theme} />
       
       {slide.voiceover && (
         <Audio src={staticFile(slide.voiceover)} volume={1.0} />
+      )}
+
+      {/* Per-slide background music override */}
+      {slide.bgMusic && (
+        <Audio src={staticFile(slide.bgMusic)} volume={0.6} loop />
       )}
 
       {/* Slide Glass Container */}
@@ -1683,7 +2779,19 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
           opacity: combinedOpacity,
           filter: combinedBlur > 0 ? `blur(${combinedBlur}px)` : undefined,
         }}>
-          {getLayout()}
+          {slide.bgVideo && (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.15, filter: 'blur(10px) saturate(0.5)' }}>
+              <MediaRenderer path={slide.bgVideo} type="video" />
+            </div>
+          )}
+          {slide.accentIcon && (
+            <div style={{ position: 'absolute', right: '-10%', bottom: '-10%', fontSize: '400px', opacity: 0.05, zIndex: 0, transform: 'rotate(-15deg)', userSelect: 'none' }}>
+              {slide.accentIcon}
+            </div>
+          )}
+          <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+            {getLayout()}
+          </div>
         </div>
       )}
       
@@ -1700,23 +2808,66 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
         </div>
       )}
 
-      {/* Modern Slide Page Indicator */}
-      <div style={{
-        position: 'absolute',
-        bottom: isPortrait ? 60 : 100,
-        right: isPortrait ? 60 : 120,
-        fontFamily,
-        fontSize: 18,
-        fontWeight: 800,
-        color: theme.primary,
-        background: theme.cardBg,
-        backdropFilter: 'blur(10px)',
-        padding: '6px 16px',
-        borderRadius: 12,
-        border: `1.5px solid ${theme.primary}`
-      }}>
-        {index + 1} / {totalSlides}
-      </div>
+
+
+      {/* Subtitle Burn-In */}
+      {slide.subtitleBurnIn && slide.lines && (
+        <div style={{
+          position: 'absolute',
+          bottom: 30,
+          left: 0,
+          width: '100%',
+          textAlign: 'center',
+          zIndex: 100,
+        }}>
+          <div style={{
+            display: 'inline-block',
+            background: 'rgba(0,0,0,0.8)',
+            color: '#FFF',
+            padding: '12px 24px',
+            borderRadius: 8,
+            fontFamily,
+            fontSize: isPortrait ? 24 : 32,
+            fontWeight: 700,
+            border: `2px solid ${theme.primary}50`
+          }}>
+            {(() => {
+              const currentTime = frame / fps;
+              const activeLine = slide.lines?.find((line) => 
+                line[0] && currentTime >= line[0].relStart && currentTime <= line[line.length - 1].relEnd
+              );
+              return activeLine ? activeLine.map(w => w.text).join('') : '';
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Ticker / Marquee */}
+      {slide.ticker && (
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: 40,
+          background: theme.primary,
+          color: theme.cardBg,
+          display: 'flex',
+          alignItems: 'center',
+          fontFamily,
+          fontSize: 20,
+          fontWeight: 800,
+          zIndex: 101,
+          overflow: 'hidden',
+          whiteSpace: 'nowrap'
+        }}>
+          <div style={{
+            transform: `translateX(${100 - (frame % 300) * 0.5}%)`
+          }}>
+            {slide.ticker.repeat(10)}
+          </div>
+        </div>
+      )}
     </AbsoluteFill>
   );
 };
@@ -2356,17 +3507,73 @@ export const Video: React.FC<VideoProps> = (config) => {
         endSecs={endPage.durationInSeconds}
       />
 
+      {/* Screen Frame Border */}
+      {video.border?.show && (
+        <ScreenBorder
+          show={video.border.show}
+          color={video.border.color}
+          width={video.border.width}
+          radius={video.border.radius}
+          glow={video.border.glow}
+          theme={theme}
+        />
+      )}
+
+      {/* Watermark Image Overlay */}
+      {branding.watermarkImage && (
+        <WatermarkOverlay
+          path={branding.watermarkImage}
+          opacity={branding.watermarkOpacity ?? 0.12}
+          size={branding.watermarkSize ?? 200}
+          position={branding.watermarkPosition ?? 'bottom-right'}
+        />
+      )}
+
       {/* Dynamic Progress Bar Overlay */}
       {video.progressBar?.show && (
         <ProgressBar
           show={video.progressBar.show}
+          type={video.progressBar.type}
           position={video.progressBar.position || 'bottom'}
           color={video.progressBar.color}
           height={video.progressBar.height}
+          thickness={video.progressBar.thickness}
+          glow={video.progressBar.glow}
           theme={theme}
           currentFrame={currentFrame}
           totalDuration={totalDuration}
         />
+      )}
+
+      {/* Slide Counter Overlay — shown only during content slides */}
+      {video.slideCounter?.show && (
+        (() => {
+          // Determine which slide we're on
+          const titleDur = titlePage.show ? Math.round(titlePage.durationInSeconds * fps) : 0;
+          const endDur = endPage.show ? Math.round(endPage.durationInSeconds * fps) : 0;
+          const inSlides = currentFrame >= titleDur && currentFrame < totalDuration - endDur;
+          if (!inSlides) return null;
+          // Find current slide index
+          let currentSlideIndex = 0;
+          for (let i = 0; i < slides.length; i++) {
+            const slideStart = Math.round((slides[i].startTime ?? 0) * fps);
+            const slideEnd = slideStart + Math.round(slides[i].durationInSeconds * fps);
+            if (currentFrame >= slideStart && currentFrame < slideEnd) {
+              currentSlideIndex = i;
+              break;
+            }
+          }
+          return (
+            <SlideCounter
+              current={currentSlideIndex + 1}
+              total={slides.length}
+              style={video.slideCounter.style ?? 'pill'}
+              position={video.slideCounter.position ?? 'bottom-right'}
+              color={video.slideCounter.color}
+              theme={theme}
+            />
+          );
+        })()
       )}
 
       {/* Dynamic Slide Sequencing using Absolute Timeline Positioning */}
@@ -2375,7 +3582,28 @@ export const Video: React.FC<VideoProps> = (config) => {
           from={0} 
           durationInFrames={Math.round(titlePage.durationInSeconds * fps)}
         >
-          <TitleSlide titlePage={titlePage} theme={theme} fontFamily={resolvedFontFamily} disableAnimations={video.disableAnimations} />
+          <div style={{ width: '100%', height: '100%', display: 'contents' }} className="title-slide-container">
+            {titlePage.textAlign || titlePage.fontWeight || titlePage.headingFontWeight || titlePage.subheadingFontWeight || titlePage.fontSize || titlePage.headingFontSize || titlePage.subheadingFontSize || titlePage.textShadow || titlePage.textStroke ? (
+              <style dangerouslySetInnerHTML={{ __html: `
+                .title-slide-container h1, .title-slide-container h2 {
+                  ${titlePage.headingFontWeight ? `font-weight: ${titlePage.headingFontWeight} !important;` : ''}
+                  ${titlePage.headingFontSize ? `font-size: ${titlePage.headingFontSize}px !important;` : ''}
+                  ${titlePage.textShadow ? `text-shadow: ${titlePage.textShadow} !important;` : ''}
+                  ${titlePage.textStroke ? `-webkit-text-stroke: ${titlePage.textStroke} !important;` : ''}
+                }
+                .title-slide-container h3, .title-slide-container p, .title-slide-container span, .title-slide-container a, .title-slide-container div {
+                  ${titlePage.subheadingFontWeight ? `font-weight: ${titlePage.subheadingFontWeight} !important;` : titlePage.fontWeight ? `font-weight: ${titlePage.fontWeight} !important;` : ''}
+                  ${titlePage.subheadingFontSize ? `font-size: ${titlePage.subheadingFontSize}px !important;` : titlePage.fontSize ? `font-size: ${titlePage.fontSize}px !important;` : ''}
+                  ${titlePage.textShadow ? `text-shadow: ${titlePage.textShadow} !important;` : ''}
+                  ${titlePage.textStroke ? `-webkit-text-stroke: ${titlePage.textStroke} !important;` : ''}
+                }
+                .title-slide-container div, .title-slide-container p, .title-slide-container h1, .title-slide-container h2, .title-slide-container h3, .title-slide-container span, .title-slide-container a {
+                  ${titlePage.textAlign ? `text-align: ${titlePage.textAlign} !important;` : ''}
+                }
+              `}} />
+            ) : null}
+            <TitleSlide titlePage={titlePage} theme={theme} fontFamily={resolvedFontFamily} disableAnimations={video.disableAnimations} />
+          </div>
         </Sequence>
       )}
       
@@ -2394,7 +3622,28 @@ export const Video: React.FC<VideoProps> = (config) => {
           from={Math.round((endPage.startTime ?? 186.0) * fps)} 
           durationInFrames={Math.round(endPage.durationInSeconds * fps)}
         >
-          <EndSlide endPage={endPage} theme={theme} fontFamily={resolvedFontFamily} disableAnimations={video.disableAnimations} />
+          <div style={{ width: '100%', height: '100%', display: 'contents' }} className="end-slide-container">
+            {endPage.textAlign || endPage.fontWeight || endPage.headingFontWeight || endPage.subheadingFontWeight || endPage.fontSize || endPage.headingFontSize || endPage.subheadingFontSize || endPage.textShadow || endPage.textStroke ? (
+              <style dangerouslySetInnerHTML={{ __html: `
+                .end-slide-container h1, .end-slide-container h2 {
+                  ${endPage.headingFontWeight ? `font-weight: ${endPage.headingFontWeight} !important;` : ''}
+                  ${endPage.headingFontSize ? `font-size: ${endPage.headingFontSize}px !important;` : ''}
+                  ${endPage.textShadow ? `text-shadow: ${endPage.textShadow} !important;` : ''}
+                  ${endPage.textStroke ? `-webkit-text-stroke: ${endPage.textStroke} !important;` : ''}
+                }
+                .end-slide-container h3, .end-slide-container p, .end-slide-container span, .end-slide-container a, .end-slide-container div {
+                  ${endPage.subheadingFontWeight ? `font-weight: ${endPage.subheadingFontWeight} !important;` : endPage.fontWeight ? `font-weight: ${endPage.fontWeight} !important;` : ''}
+                  ${endPage.subheadingFontSize ? `font-size: ${endPage.subheadingFontSize}px !important;` : endPage.fontSize ? `font-size: ${endPage.fontSize}px !important;` : ''}
+                  ${endPage.textShadow ? `text-shadow: ${endPage.textShadow} !important;` : ''}
+                  ${endPage.textStroke ? `-webkit-text-stroke: ${endPage.textStroke} !important;` : ''}
+                }
+                .end-slide-container div, .end-slide-container p, .end-slide-container h1, .end-slide-container h2, .end-slide-container h3, .end-slide-container span, .end-slide-container a {
+                  ${endPage.textAlign ? `text-align: ${endPage.textAlign} !important;` : ''}
+                }
+              `}} />
+            ) : null}
+            <EndSlide endPage={endPage} theme={theme} fontFamily={resolvedFontFamily} disableAnimations={video.disableAnimations} />
+          </div>
         </Sequence>
       )}
     </AbsoluteFill>

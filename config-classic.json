@@ -1,0 +1,244 @@
+{
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "maxCharactersPerSlide": 750,
+    "themeName": "royal-indigo",
+    "theme": {
+      "cornerDecorations": false,
+      "backgroundPattern": "none"
+    },
+    "fontFamily": "outfit",
+    "fontWeight": "600",
+    "disableAnimations": false,
+    "iconName": "Video",
+    "progressBar": {
+      "show": false,
+      "type": "border",
+      "position": "bottom",
+      "color": "",
+      "height": 8,
+      "thickness": 6,
+      "glow": true
+    },
+    "border": {
+      "show": true,
+      "color": "",
+      "width": 12,
+      "radius": 24,
+      "glow": true
+    },
+    "slideCounter": {
+      "show": false,
+      "position": "bottom-right",
+      "style": "pill",
+      "color": ""
+    }
+  },
+  "audio": {
+    "musicPath": "music/background.wav",
+    "volume": 0.5,
+    "loop": true,
+    "fadeInInSeconds": 0.5,
+    "fadeOutInSeconds": 1
+  },
+  "branding": {
+    "showLogo": true,
+    "logoPath": "",
+    "logoText": "EASY-SLIDE-VIDEOS",
+    "position": "top-left",
+    "size": 50,
+    "opacity": 0.9,
+    "persistent": true,
+    "authorName": "Open Source Slideshow Video Maker",
+    "badgeText": "ENGINE"
+  },
+  "titlePage": {
+    "show": true,
+    "title": "Easy-Slide-Videos",
+    "subtitle": "The complete slideshow video engine — markdown, LaTeX, charts, collages, and more",
+    "durationInSeconds": 4,
+    "theme": {
+      "background": "linear-gradient(135deg, #0b1528 0%, #020617 100%)",
+      "textColor": "#f8fafc",
+      "subtitleColor": "#94a3b8"
+    },
+    "style": "glassmorphic"
+  },
+  "slides": [
+    {
+      "id": "slide_1",
+      "folder": "slide_1",
+      "media": "assets/slide_1/media1.bmp",
+      "mediaType": "image",
+      "heading": "Animated Caption Subtitles",
+      "subheading": "Real-time Word Highlights",
+      "content": "Subtitle captions sync automatically in the layout.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "split-media-right",
+      "transition": "fade",
+      "voiceover": "assets/slide_1/voiceover.wav",
+      "mediaList": [
+        "assets/slide_1/media1.bmp"
+      ],
+      "lines": [
+        [
+          {
+            "text": "Subtitle",
+            "relStart": 0,
+            "relEnd": 0.35714285714285715
+          },
+          {
+            "text": "captions",
+            "relStart": 0.35714285714285715,
+            "relEnd": 0.7142857142857143
+          },
+          {
+            "text": "sync",
+            "relStart": 0.7142857142857143,
+            "relEnd": 1.0714285714285714
+          },
+          {
+            "text": "automatically",
+            "relStart": 1.0714285714285714,
+            "relEnd": 1.4285714285714286
+          },
+          {
+            "text": "in",
+            "relStart": 1.4285714285714286,
+            "relEnd": 1.7857142857142858
+          },
+          {
+            "text": "the",
+            "relStart": 1.7857142857142858,
+            "relEnd": 2.142857142857143
+          },
+          {
+            "text": "layout.",
+            "relStart": 2.142857142857143,
+            "relEnd": 2.5
+          }
+        ],
+        [
+          {
+            "text": "Try",
+            "relStart": 2.5,
+            "relEnd": 2.8125
+          },
+          {
+            "text": "modifying",
+            "relStart": 2.8125,
+            "relEnd": 3.125
+          },
+          {
+            "text": "this",
+            "relStart": 3.125,
+            "relEnd": 3.4375
+          },
+          {
+            "text": "text",
+            "relStart": 3.4375,
+            "relEnd": 3.75
+          },
+          {
+            "text": "directly",
+            "relStart": 3.75,
+            "relEnd": 4.0625
+          },
+          {
+            "text": "inside",
+            "relStart": 4.0625,
+            "relEnd": 4.375
+          },
+          {
+            "text": "captions.srt",
+            "relStart": 4.375,
+            "relEnd": 4.6875
+          },
+          {
+            "text": "file!",
+            "relStart": 4.6875,
+            "relEnd": 5
+          }
+        ]
+      ],
+      "startTime": 4
+    },
+    {
+      "id": "slide_2",
+      "folder": "slide_2",
+      "media": "assets/slide_2/media2.bmp",
+      "mediaType": "image",
+      "heading": "Markdown & GFM Tables",
+      "subheading": "Rich Formatting Support",
+      "content": "Full markdown support: **bold**, *italic*, ~~highlight~~, `code`.",
+      "durationInSeconds": 6,
+      "mediaStartFromInSeconds": 0,
+      "layout": "split-media-right",
+      "transition": "fade",
+      "mediaList": [
+        "assets/slide_2/media2.bmp"
+      ],
+      "startTime": 9
+    },
+    {
+      "id": "slide_3",
+      "folder": "slide_3",
+      "media": null,
+      "mediaType": null,
+      "heading": "Dynamic SVG Bar Charts",
+      "subheading": "Interactive Data Visualizations",
+      "content": "Animated bar charts render inline via the dependency-free SVG charting engine.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "split-media-right",
+      "transition": "fade",
+      "startTime": 15
+    },
+    {
+      "id": "slide_4",
+      "folder": "slide_4",
+      "media": null,
+      "mediaType": null,
+      "heading": "Donut & Pie Charts",
+      "subheading": "Segmented Data Distribution",
+      "content": "Visualize data splits and distributions using animated donut and pie charts.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "split-media-right",
+      "transition": "fade",
+      "startTime": 20
+    },
+    {
+      "id": "slide_5",
+      "folder": "slide_5",
+      "media": null,
+      "mediaType": null,
+      "heading": "Line Chart Trends",
+      "subheading": "Gradient Growth Curves",
+      "content": "Animated vector line charts display growth trends with labeled coordinates.",
+      "durationInSeconds": 5,
+      "mediaStartFromInSeconds": 0,
+      "layout": "split-media-right",
+      "transition": "fade",
+      "startTime": 25
+    }
+  ],
+  "endPage": {
+    "show": true,
+    "title": "Easy-Slide-Videos",
+    "subtitle": "Clone and build on GitHub. Support open-source creators!",
+    "contact": "https://github.com/titasmallick/Easy-Slide-Videos",
+    "website": "github.com",
+    "durationInSeconds": 4,
+    "theme": {
+      "background": "linear-gradient(135deg, #0b1528 0%, #020617 100%)",
+      "textColor": "#f8fafc",
+      "subtitleColor": "#94a3b8"
+    },
+    "style": "glassmorphic",
+    "startTime": 30
+  }
+}

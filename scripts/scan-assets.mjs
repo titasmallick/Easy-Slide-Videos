@@ -432,7 +432,19 @@ async function scan() {
       mediaStartFromInSeconds: existing.mediaStartFromInSeconds ?? scanned.mediaStartFromInSeconds,
       voiceover: existing.voiceover ?? scanned.voiceover,
       mediaList: existing.mediaList ?? scanned.mediaList,
-      lines: existing.lines ?? scanned.lines
+      lines: existing.lines ?? scanned.lines,
+      chart: existing.chart ?? scanned.chart,
+      fontWeight: existing.fontWeight ?? scanned.fontWeight,
+      headingFontWeight: existing.headingFontWeight ?? scanned.headingFontWeight,
+      subheadingFontWeight: existing.subheadingFontWeight ?? scanned.subheadingFontWeight,
+      textAlign: existing.textAlign ?? scanned.textAlign,
+      fontSize: existing.fontSize ?? scanned.fontSize,
+      headingFontSize: existing.headingFontSize ?? scanned.headingFontSize,
+      subheadingFontSize: existing.subheadingFontSize ?? scanned.subheadingFontSize,
+      textShadow: existing.textShadow ?? scanned.textShadow,
+      textStroke: existing.textStroke ?? scanned.textStroke,
+      transitionDurationInSeconds: existing.transitionDurationInSeconds ?? scanned.transitionDurationInSeconds,
+      overlayOpacity: existing.overlayOpacity ?? scanned.overlayOpacity
     } : scanned;
 
     mergedSlide.startTime = currentStartTime;
