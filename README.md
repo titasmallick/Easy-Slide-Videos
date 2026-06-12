@@ -2,7 +2,7 @@
 
 A self-contained, customizable, and automated video generation project built using **Remotion** and **React**. It scans your assets dynamically, populates a configuration file, and renders high-quality videos with animated backgrounds, clean typography, glassmorphism cards, and smooth transitions.
 
-![Easy-Slide-Videos Showcase](docs/showcase.gif)
+<img src="docs/showcase.gif" width="100%" alt="Easy-Slide-Videos Showcase" />
 
 ---
 
@@ -255,5 +255,5 @@ To render high-quality still images/covers from specific compositions:
 ---
 
 ## 📄 License
-ISC
+MIT
 
