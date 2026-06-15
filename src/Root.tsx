@@ -12,18 +12,26 @@ export const RemotionRoot: React.FC = () => {
   const fps = config.video.fps || 30;
   
   // Calculate dynamic duration for MainVideo using absolute timeline bounds
-  const totalDurationInFrames = Math.round(
-    config.endPage.show
-      ? ((config.endPage.startTime || 186.0) + (config.endPage.durationInSeconds || 8.832)) * fps
-      : 150
-  );
+  const calculateTotalFrames = (cfg: any, fpsRate: number) => {
+    if (cfg.endPage?.show) {
+      const start = cfg.endPage.startTime ?? 0;
+      const duration = cfg.endPage.durationInSeconds ?? 0;
+      return Math.round((start + duration) * fpsRate);
+    }
+    // fallback to sum of slide durations or max end time
+    if (cfg.slides && cfg.slides.length > 0) {
+      const lastSlide = cfg.slides[cfg.slides.length - 1];
+      const start = lastSlide.startTime ?? 0;
+      const duration = lastSlide.durationInSeconds ?? 5;
+      return Math.round((start + duration) * fpsRate);
+    }
+    return 150;
+  };
+
+  const totalDurationInFrames = calculateTotalFrames(config, fps);
 
   const reelsFps = configReels.video?.fps || 30;
-  const reelsDurationInFrames = Math.round(
-    configReels.endPage?.show
-      ? ((configReels.endPage.startTime || 116.356) + (configReels.endPage.durationInSeconds || 15.644)) * reelsFps
-      : 132 * reelsFps
-  );
+  const reelsDurationInFrames = calculateTotalFrames(configReels, reelsFps);
 
   return (
     <>

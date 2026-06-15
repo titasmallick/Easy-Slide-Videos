@@ -1,3 +1,4 @@
+import { validateConfig } from './schema.mjs';
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline/promises';
@@ -552,7 +553,7 @@ async function runSetup() {
   }
 
   // Write base configuration parameters
-  fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2), 'utf-8');
+  fs.writeFileSync(configPath, JSON.stringify(validateConfig(currentConfig), null, 2), 'utf-8');
   console.log(`Initial parameters saved to config.json.`);
 
   // STEP 8: DYNAMIC RUN LOOP WITH REVIEWS AND EDITS
@@ -709,7 +710,7 @@ async function runSetup() {
         parsedConfig.audio.fadeInInSeconds = parseFloat(await rl.question(`⏳ Fade-In Duration [Current: ${parsedConfig.audio.fadeInInSeconds}]: `) || `${parsedConfig.audio.fadeInInSeconds}`);
         parsedConfig.audio.fadeOutInSeconds = parseFloat(await rl.question(`⏳ Fade-Out Duration [Current: ${parsedConfig.audio.fadeOutInSeconds}]: `) || `${parsedConfig.audio.fadeOutInSeconds}`);
         
-        fs.writeFileSync(configPath, JSON.stringify(parsedConfig, null, 2), 'utf-8');
+        fs.writeFileSync(configPath, JSON.stringify(validateConfig(parsedConfig), null, 2), 'utf-8');
         console.log(`${colors.fgGreen}Globals updated!${colors.reset}`);
 
       } else if (choice === '2') {
@@ -793,7 +794,7 @@ async function runSetup() {
             }
           });
           
-          fs.writeFileSync(configPath, JSON.stringify(parsedConfig, null, 2), 'utf-8');
+          fs.writeFileSync(configPath, JSON.stringify(validateConfig(parsedConfig), null, 2), 'utf-8');
           console.log(`${colors.fgGreen}Slide ${slideNum} updated successfully!${colors.reset}`);
         } else {
           console.log(`${colors.fgRed}Invalid slide number selection.${colors.reset}`);
@@ -853,7 +854,7 @@ async function runSetup() {
           chart
         });
         
-        fs.writeFileSync(configPath, JSON.stringify(parsedConfig, null, 2), 'utf-8');
+        fs.writeFileSync(configPath, JSON.stringify(validateConfig(parsedConfig), null, 2), 'utf-8');
         console.log(`${colors.fgGreen}Added slide ${nextIndex} under folder: assets/${folderName}${colors.reset}`);
 
       } else if (choice === '4') {
@@ -910,7 +911,7 @@ async function runSetup() {
           });
 
           parsedConfig.slides = tempSlides;
-          fs.writeFileSync(configPath, JSON.stringify(parsedConfig, null, 2), 'utf-8');
+          fs.writeFileSync(configPath, JSON.stringify(validateConfig(parsedConfig), null, 2), 'utf-8');
           console.log(`${colors.fgGreen}Slide deleted and folders re-indexed!${colors.reset}`);
         } else {
           console.log(`${colors.fgRed}Invalid selection.${colors.reset}`);

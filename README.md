@@ -36,6 +36,7 @@ Because this engine is completely driven by a simple `config.json` payload, it c
 - **Automated SRT/VTT Subtitle Parser**: Parses caption files for word-by-word highlights (karaoke mode) and auto-calibrates slide duration.
 - **Collage Grid Layouts**: Render multiple images/videos in a responsive CSS Grid collage per slide.
 - **Interactive Web Dashboard**: Local web app to configure slides and render compositions with real-time progress (`npm run dashboard`).
+- **Runtime Config Validation**: Built-in Zod schema validation ensures dashboard and CLI edits cannot silently corrupt `config.json`.
 - **10 Cinematic Transitions**: `fade`, `slide-left`, `slide-right`, `slide-up`, `slide-down`, `zoom-reveal`, `glitch-blur`, `wipe-right`, `morph-scale`, `cube-rotate`
 - **10 Theme Presets**: royal-indigo, radiant-gold, neon-emerald, electric-amethyst, cyber-cyan, midnight-magenta, arctic-blue, volcanic-orange, slate-silver, crimson-pulse
 - **8 Title/End Page Styles**: standard, minimalist, thumbnail, glassmorphic, bold-brutalism, cyberpunk-neon, editorial-serif, split-reveal

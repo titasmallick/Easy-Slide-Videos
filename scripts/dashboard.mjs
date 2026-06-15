@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { validateConfig } from './schema.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,9 +61,6 @@ const server = http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to read config.json', details: e.message }));
     }
-    return;
-  }
-
   // 2. POST /api/config: Save config.json
   if (pathname === '/api/config' && req.method === 'POST') {
     let body = '';
@@ -71,12 +69,13 @@ const server = http.createServer((req, res) => {
       try {
         const configPath = path.join(projectRoot, 'config.json');
         const parsed = JSON.parse(body);
-        fs.writeFileSync(configPath, JSON.stringify(parsed, null, 2), 'utf-8');
+        const validatedConfig = validateConfig(parsed);
+        fs.writeFileSync(configPath, JSON.stringify(validatedConfig, null, 2), 'utf-8');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Configuration saved successfully!' }));
       } catch (e) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid JSON or write failed', details: e.message }));
+        res.end(JSON.stringify({ error: 'Invalid config format or write failed', details: e.message }));
       }
     });
     return;

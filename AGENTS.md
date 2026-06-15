@@ -12,6 +12,7 @@ This project is a custom slideshow video generator built with Remotion and React
 * **Configuration Files**:
   * [config.json](file:///D:/GITHUB/BalerKaj/config.json) (Landscape version metadata and defaults)
   * [config-reels.json](file:///D:/GITHUB/BalerKaj/config-reels.json) (Portrait version metadata and overrides)
+  * [scripts/schema.mjs](file:///D:/GITHUB/BalerKaj/scripts/schema.mjs) (Zod schema definition for runtime validation)
 * **Asset Scanner**: [scripts/scan-assets.mjs](file:///D:/GITHUB/BalerKaj/scripts/scan-assets.mjs) (Auto-detects and compiles slides)
 * **Showcase Generator**: [scripts/setup-dummy.mjs](file:///D:/GITHUB/BalerKaj/scripts/setup-dummy.mjs) (10-slide feature showcase with BMP placeholders)
 * **Setup Agent**: [scripts/setup-agent.mjs](file:///D:/GITHUB/BalerKaj/scripts/setup-agent.mjs) (Interactive CLI setup)
