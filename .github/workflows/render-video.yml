@@ -1,0 +1,48 @@
+name: Render Remotion Video
+
+on:
+  # Trigger automatically on push to main
+  push:
+    branches:
+      - main
+  # Allow manual/API trigger with custom data
+  workflow_dispatch:
+    inputs:
+      test_message:
+        description: 'A test message sent from the API'
+        required: false
+        default: 'Triggered manually with default data'
+
+jobs:
+  render:
+    name: Render Video
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Print API Payload
+        run: echo "The workflow received this message -> ${{ github.event.inputs.test_message }}"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Dummy Data
+        run: node scripts/setup-dummy.mjs
+
+      - name: Render Video
+        run: npm run render
+
+      - name: Upload video artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rendered-Video
+          path: out/output.mp4
+          retention-days: 7
