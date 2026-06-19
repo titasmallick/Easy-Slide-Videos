@@ -20,3 +20,12 @@ public/assets/
 
 # Build outputs
 build/
+
+# Test files and nested repos for Daily Bio News
+BioNotes/
+daily-bio-news-repo/
+src/data/
+*.mp4
+test-*.cjs
+test-*.mjs
+local-test-*.mjs
