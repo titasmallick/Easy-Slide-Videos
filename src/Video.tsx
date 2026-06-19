@@ -3406,7 +3406,7 @@ export const Video: React.FC<VideoProps> = (config) => {
       {/* Background Audio */}
       {audio.musicPath && (
         <Audio 
-          src={staticFile(audio.musicPath)} 
+          src={audio.musicPath.startsWith('http') || audio.musicPath.match(/^[a-zA-Z]:\\/) || audio.musicPath.startsWith('/') ? audio.musicPath : staticFile(audio.musicPath)} 
           volume={musicVolume} 
           loop={audio.loop} 
         />
