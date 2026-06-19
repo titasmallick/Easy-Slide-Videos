@@ -39,7 +39,11 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="MainVideo"
         component={Video as any}
-        durationInFrames={totalDurationInFrames > 0 ? totalDurationInFrames : 150}
+        calculateMetadata={({ props }) => {
+          const fps = props?.video?.fps || 30;
+          const totalFrames = calculateTotalFrames(props, fps);
+          return { durationInFrames: totalFrames > 0 ? totalFrames : 150 };
+        }}
         fps={fps}
         width={config.video.width || 1920}
         height={config.video.height || 1080}
@@ -50,7 +54,11 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="Reels"
         component={Video as any}
-        durationInFrames={reelsDurationInFrames > 0 ? reelsDurationInFrames : 150}
+        calculateMetadata={({ props }) => {
+          const localFps = props?.video?.fps || 30;
+          const totalFrames = calculateTotalFrames(props, localFps);
+          return { durationInFrames: totalFrames > 0 ? totalFrames : 150 };
+        }}
         fps={reelsFps}
         width={configReels.video.width || 1080}
         height={configReels.video.height || 1920}

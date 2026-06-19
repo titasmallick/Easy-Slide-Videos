@@ -2171,7 +2171,6 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
   const entrance = disableAnimations
     ? 1
     : spring({ frame, fps, config: { damping: 13, stiffness: 120 } });
-  
   const exitFrames = Math.round((slide.transitionDurationInSeconds ?? 0.5) * fps);
   const exitStart = durationInFrames - exitFrames;
 
@@ -2179,7 +2178,7 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
   const mediaScale = interpolate(entrance, [0, 1], [0.95, 1]);
 
   const isHeadingOnly = !slide.content && !slide.media;
-  const contentFontSize = slide.content ? (slide.content.length > 200 ? 30 : slide.content.length > 100 ? 36 : 42) : 36;
+  const contentFontSize = slide.content ? (slide.content.length > 200 ? 38 : slide.content.length > 100 ? 44 : 52) : 44;
 
   const renderTextContent = () => {
     if (!slide.heading && !slide.subheading && !slide.content) return null;
@@ -2197,7 +2196,7 @@ const ContentSlide: React.FC<{ slide: SlideData; index: number; totalSlides: num
         {slide.heading && (
           <h2 style={{
             fontFamily,
-            fontSize: slide.headingFontSize || (isPortrait ? 48 : 56),
+            fontSize: slide.headingFontSize || (isPortrait ? 56 : 64),
             fontWeight: (slide.headingFontWeight as any) || 800,
             color: theme.primary,
             margin: '0 0 16px 0',
