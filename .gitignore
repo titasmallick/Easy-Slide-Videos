@@ -29,3 +29,7 @@ src/data/
 test-*.cjs
 test-*.mjs
 local-test-*.mjs
+
+# Temporary python scripts
+fix_space.py
+recreate_space.py
